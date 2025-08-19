@@ -1,0 +1,6 @@
+composer-lock.json
+package-lock.json
+node_modules
+/admin/frontend/node_modules
+/admin/frontend/build/*
+/admin/frontend/package-lock.json

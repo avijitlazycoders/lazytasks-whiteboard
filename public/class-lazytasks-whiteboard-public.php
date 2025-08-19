@@ -59,7 +59,7 @@ class Lazytasks_Whiteboard_Public {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_styles() {
+	public function lazytasks_whiteboard_enqueue_styles() {
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -73,7 +73,19 @@ class Lazytasks_Whiteboard_Public {
 		 * class.
 		 */
 
-		wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/lazytasks-whiteboard-public.css', array(), $this->version, 'all' );
+		// wp_enqueue_style( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'css/lazytasks-whiteboard-public.css', array(), $this->version, 'all' );
+		$lazytask_page_id = get_option('lazytask_page_id');
+
+		if (is_page($lazytask_page_id)) {
+			if(get_post_status() === 'publish'){
+				// phpcs:ignore WordPress.WP.EnqueuedStylesScope
+				wp_enqueue_style( 'lazytasks-whiteboard-style', plugin_dir_url( __DIR__ ) . 'admin/frontend/build/index.css', array(), $this->version, 'all');
+			}else{
+				// redirect to home page
+				wp_redirect(home_url());
+            	exit;
+			}
+		}
 
 	}
 
@@ -82,7 +94,7 @@ class Lazytasks_Whiteboard_Public {
 	 *
 	 * @since    1.0.0
 	 */
-	public function enqueue_scripts() {
+	public function lazytasks_whiteboard_enqueue_scripts() {
 
 		/**
 		 * This function is provided for demonstration purposes only.
@@ -96,7 +108,25 @@ class Lazytasks_Whiteboard_Public {
 		 * class.
 		 */
 
-		wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/lazytasks-whiteboard-public.js', array( 'jquery' ), $this->version, false );
+		// wp_enqueue_script( $this->plugin_name, plugin_dir_url( __FILE__ ) . 'js/lazytasks-whiteboard-public.js', array( 'jquery' ), $this->version, false );
+		$lazytask_page_id = get_option('lazytask_page_id');
+
+		if (is_page($lazytask_page_id)) {
+			if(get_post_status() === 'publish'){
+				// phpcs:ignore WordPress.WP.EnqueuedScriptsScope
+				wp_enqueue_script('lazytasks-whiteboard-script', plugin_dir_url( __DIR__ ) . 'admin/frontend/build/index.js', array('jquery', 'wp-element'), LAZYTASK_VERSION, true);
+				wp_localize_script('lazytasks-whiteboard-script', 'appLocalizerWhiteboard', [
+					'apiUrl' => home_url('/wp-json'),
+					'homeUrl' => home_url(''),
+					'nonce' => wp_create_nonce('wp_rest'),
+					// 'i18n' => \Lazytask\Services\TransStrings::getStrings(),
+				]);
+			}else{
+				// redirect to home page
+				wp_redirect(home_url());
+            	exit;
+			}
+		}
 
 	}
 

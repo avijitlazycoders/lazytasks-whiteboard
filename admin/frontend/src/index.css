@@ -1,0 +1,634 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* CSS variables. */
+:root {
+  --PhoneInput-color--focus: #03b2cb;
+  --PhoneInputInternationalIconPhone-opacity: 0.8;
+  --PhoneInputInternationalIconGlobe-opacity: 0.65;
+  --PhoneInputCountrySelect-marginRight: 0.35em;
+  --PhoneInputCountrySelectArrow-width: 0.3em;
+  --PhoneInputCountrySelectArrow-marginLeft: var(
+    --PhoneInputCountrySelect-marginRight
+  );
+  --PhoneInputCountrySelectArrow-borderWidth: 1px;
+  --PhoneInputCountrySelectArrow-opacity: 0.45;
+  --PhoneInputCountrySelectArrow-color: currentColor;
+  --PhoneInputCountrySelectArrow-color--focus: var(--PhoneInput-color--focus);
+  --PhoneInputCountrySelectArrow-transform: rotate(45deg);
+  --PhoneInputCountryFlag-aspectRatio: 1.5;
+  --PhoneInputCountryFlag-height: 1em;
+  --PhoneInputCountryFlag-borderWidth: 1px;
+  --PhoneInputCountryFlag-borderColor: rgba(0, 0, 0, 0.5);
+  --PhoneInputCountryFlag-borderColor--focus: var(--PhoneInput-color--focus);
+  --PhoneInputCountryFlag-backgroundColor--loading: rgba(0, 0, 0, 0.1);
+}
+
+input[type="checkbox"]:checked::before {
+  content: none !important;
+}
+
+.PhoneInput {
+  /* This is done to stretch the contents of this component. */
+  display: flex;
+  align-items: center;
+}
+
+.PhoneInputInput {
+  /* The phone number input stretches to fill all empty space */
+  flex: 1;
+  /* The phone number input should shrink
+       to make room for the extension input */
+  min-width: 0;
+}
+
+.PhoneInputCountryIcon {
+  width: calc(
+    var(--PhoneInputCountryFlag-height) *
+      var(--PhoneInputCountryFlag-aspectRatio)
+  );
+  height: var(--PhoneInputCountryFlag-height);
+}
+
+.PhoneInputCountryIcon--square {
+  width: var(--PhoneInputCountryFlag-height);
+}
+
+.PhoneInputCountryIcon--border {
+  /* Removed `background-color` because when an `<img/>` was still loading
+       it would show a dark gray rectangle. */
+  /* For some reason the `<img/>` is not stretched to 100% width and height
+       and sometime there can be seen white pixels of the background at top and bottom. */
+  background-color: var(--PhoneInputCountryFlag-backgroundColor--loading);
+  /* Border is added via `box-shadow` because `border` interferes with `width`/`height`. */
+  /* For some reason the `<img/>` is not stretched to 100% width and height
+       and sometime there can be seen white pixels of the background at top and bottom,
+       so an additional "inset" border is added. */
+  box-shadow:
+    0 0 0 var(--PhoneInputCountryFlag-borderWidth)
+      var(--PhoneInputCountryFlag-borderColor),
+    inset 0 0 0 var(--PhoneInputCountryFlag-borderWidth)
+      var(--PhoneInputCountryFlag-borderColor);
+}
+
+.PhoneInputCountryIconImg {
+  display: block;
+  /* 3rd party <SVG/> flag icons won't stretch if they have `width` and `height`.
+       Also, if an <SVG/> icon's aspect ratio was different, it wouldn't fit too. */
+  width: 100%;
+  height: 100%;
+}
+
+.PhoneInputInternationalIconPhone {
+  opacity: var(--PhoneInputInternationalIconPhone-opacity);
+}
+
+.PhoneInputInternationalIconGlobe {
+  opacity: var(--PhoneInputInternationalIconGlobe-opacity);
+}
+
+/* Styling native country `<select/>`. */
+
+.PhoneInputCountry {
+  position: relative;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  margin-right: var(--PhoneInputCountrySelect-marginRight);
+}
+
+.PhoneInputCountrySelect {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  width: 100%;
+  z-index: 1;
+  border: 0;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.PhoneInputCountrySelect[disabled],
+.PhoneInputCountrySelect[readonly] {
+  cursor: default;
+}
+
+.PhoneInputCountrySelectArrow {
+  display: block;
+  content: "";
+  width: var(--PhoneInputCountrySelectArrow-width);
+  height: var(--PhoneInputCountrySelectArrow-width);
+  margin-left: var(--PhoneInputCountrySelectArrow-marginLeft);
+  border-style: solid;
+  border-color: var(--PhoneInputCountrySelectArrow-color);
+  border-top-width: 0;
+  border-bottom-width: var(--PhoneInputCountrySelectArrow-borderWidth);
+  border-left-width: 0;
+  border-right-width: var(--PhoneInputCountrySelectArrow-borderWidth);
+  transform: var(--PhoneInputCountrySelectArrow-transform);
+  opacity: var(--PhoneInputCountrySelectArrow-opacity);
+}
+
+.PhoneInputCountrySelect:focus
+  + .PhoneInputCountryIcon
+  + .PhoneInputCountrySelectArrow {
+  opacity: 1;
+  color: var(--PhoneInputCountrySelectArrow-color--focus);
+}
+
+.PhoneInputCountrySelect:focus + .PhoneInputCountryIcon--border {
+  box-shadow:
+    0 0 0 var(--PhoneInputCountryFlag-borderWidth)
+      var(--PhoneInputCountryFlag-borderColor--focus),
+    inset 0 0 0 var(--PhoneInputCountryFlag-borderWidth)
+      var(--PhoneInputCountryFlag-borderColor--focus);
+}
+
+.PhoneInputCountrySelect:focus
+  + .PhoneInputCountryIcon
+  .PhoneInputInternationalIconGlobe {
+  opacity: 1;
+  color: var(--PhoneInputCountrySelectArrow-color--focus);
+}
+
+.mantine-Menu-dropdown div[aria-hidden="true"] {
+  display: none;
+}
+.library-button {
+  display: none !important;
+}
+/* role edit */
+.role-editable-group {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.role-edit-icon {
+  opacity: 0;
+  margin-left: 4px;
+  transition: opacity 0.2s;
+  cursor: pointer;
+}
+.role-editable-group:hover .role-edit-icon {
+  opacity: 1;
+}
+
+/*calendar css*/
+.fc-toolbar-title {
+  font-family: var(--mantine-font-family-headings);
+  font-weight: 600;
+}
+.fc-today-button {
+  text-transform: capitalize !important;
+}
+.fc-h-event {
+  margin-bottom: 5px;
+  background-color: rgb(236 255 255);
+  border-color: rgb(236 255 255);
+}
+.fc-daygrid-day-bg {
+  display: none;
+}
+.fc .fc-daygrid-day-frame {
+  height: 125px;
+}
+.fc .fc-button-primary:disabled {
+  background-color: #ebf1f4 !important;
+  border-color: #ebf1f4 !important;
+  color: #202020 !important;
+}
+.fc .fc-prev-button,
+.fc .fc-next-button {
+  background-color: #ebf1f4 !important;
+  border-color: #ebf1f4 !important;
+  color: #202020 !important;
+}
+.fc .fc-prev-button:hover,
+.fc .fc-next-button:hover,
+.fc .fc-prev-button:focus,
+.fc .fc-next-button:focus,
+.fc .fc-prev-button:focus-visible,
+.fc .fc-next-button:focus-visible {
+  background-color: #202020 !important;
+  border-color: #202020 !important;
+  color: #ffffff !important;
+  box-shadow: none;
+}
+
+.fc-col-header {
+  background-color: #ebf1f4;
+  padding: 20px 0;
+  height: 35px !important;
+}
+.fc .fc-col-header-cell-cushion {
+    display: inline-block;
+    padding: 7px 4px !important;
+}
+
+.fc-daygrid-day {
+  position: relative;
+}
+
+.fc-daygrid-day:hover::before {
+  content: "+";
+  position: absolute;
+  bottom: 5px;
+  right: 5px;
+  width: 30px;
+  height: 30px;
+  background: #ED7D31;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 24px;
+  cursor: pointer;
+  z-index: 1000;
+}
+
+/* Add this to your CSS file or as a style tag in your component */
+.mention {
+    border-radius: 4px;
+    padding: 2px 4px;
+    background-color: #EDF2FF;
+    color: #3B5BDB;
+    font-weight: 500;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.mention:hover {
+    background-color: #DBE4FF;
+}
+
+/* Style for the RichTextEditor content */
+.ProseMirror .mention {
+    background-color: #EDF2FF;
+    border-radius: 4px;
+    padding: 2px 4px;
+    color: #3B5BDB;
+    font-weight: 500;
+    white-space: nowrap;
+    font-style: italic;
+}
+
+/* text editor styles */
+.ProseMirror {
+    min-height: 120px;
+    padding: 16px;
+}
+
+.ProseMirror ul {
+    list-style-type: disc;
+    padding-left: 1.5em;
+}
+
+.ProseMirror ol {
+    list-style-type: decimal;
+    padding-left: 1.5em;
+}
+
+.ProseMirror strong {
+    font-weight: bold;
+}
+
+body {
+  background-color: #f4f4f4 !important;
+}
+div#lazy-pms {
+  margin-left: -20px;
+}
+.container #lazy-pms {
+  margin-left: auto;
+}
+.scrollbar-width-thin::-webkit-scrollbar {
+  width: 3px;
+}
+.scrollbar-width-thin::-webkit-scrollbar-thumb {
+  background-color: #cccccc;
+  border-radius: 2px;
+}
+.bg-purple-500 {
+  background-color: #6c63ff !important;
+}
+.bg-violet-500 {
+  background-color: rgb(139 92 246);
+}
+
+
+._3_ygE {
+  display: table;
+  border-bottom: #e6e4e4 1px solid;
+  border-top: #e6e4e4 1px solid;
+  border-left: #e6e4e4 1px solid;
+}
+
+._1nBOt {
+  display: table-row;
+  list-style: none;
+}
+
+._2eZzQ {
+  border-right: 1px solid rgb(196, 196, 196);
+  opacity: 1;
+  margin-left: -2px;
+}
+
+._WuQ0f {
+  display: table-cell;
+  vertical-align: -webkit-baseline-middle;
+  vertical-align: middle;
+}
+
+._3ZbQT {
+  display: table;
+  border-bottom: #e6e4e4 1px solid;
+  border-left: #e6e4e4 1px solid;
+}
+
+._34SS0 {
+  display: table-row;
+  text-overflow: ellipsis;
+}
+
+._34SS0:nth-of-type(even) {
+  background-color: #f5f5f5;
+}
+
+._3lLk3 {
+  display: table-cell;
+  vertical-align: middle;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+._nI1Xw {
+  display: flex;
+}
+
+._2QjE6 {
+  color: rgb(86 86 86);
+  font-size: 0.6rem;
+  padding: 0.15rem 0.2rem 0rem 0.2rem;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  cursor: pointer;
+}
+._2TfEi {
+  font-size: 0.6rem;
+  padding-left: 1rem;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+._3T42e {
+  background: #fff;
+  padding: 12px;
+  box-shadow:
+    0 3px 6px rgba(0, 0, 0, 0.16),
+    0 3px 6px rgba(0, 0, 0, 0.23);
+}
+
+._29NTg {
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #666;
+}
+
+._25P-K {
+  position: absolute;
+  display: flex;
+  flex-shrink: 0;
+  pointer-events: none;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+._3gVAq {
+  visibility: hidden;
+  position: absolute;
+  display: flex;
+  pointer-events: none;
+}
+
+._1eT-t {
+  overflow: hidden auto;
+  width: 1rem;
+  flex-shrink: 0;
+  /*firefox*/
+  scrollbar-width: thin;
+}
+._1eT-t::-webkit-scrollbar {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+._1eT-t::-webkit-scrollbar-corner {
+  background: transparent;
+}
+._1eT-t::-webkit-scrollbar-thumb {
+  border: 6px solid transparent;
+  background: rgba(0, 0, 0, 0.2);
+  background: var(--palette-black-alpha-20, rgba(0, 0, 0, 0.2));
+  border-radius: 10px;
+  background-clip: padding-box;
+}
+._1eT-t::-webkit-scrollbar-thumb:hover {
+  border: 4px solid transparent;
+  background: rgba(0, 0, 0, 0.3);
+  background: var(--palette-black-alpha-30, rgba(0, 0, 0, 0.3));
+  background-clip: padding-box;
+}
+
+._2dZTy {
+  fill: #fff;
+}
+
+._2dZTy:nth-child(even) {
+  fill: #f5f5f5;
+}
+
+._3rUKi {
+  stroke: #ebeff2;
+}
+
+._RuwuK {
+  stroke: #e6e4e4;
+}
+
+._9w8d5 {
+  text-anchor: middle;
+  fill: #333;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+._1rLuZ {
+  stroke: #e6e4e4;
+}
+
+._2q1Kt {
+  text-anchor: middle;
+  fill: #555;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+._35nLX {
+  fill: #ebf1f4;
+  stroke: #e0e0e0;
+  stroke-width: 0.8;
+}
+
+._KxSXS {
+  cursor: pointer;
+  outline: none;
+}
+
+._KxSXS:hover ._3w_5u {
+  visibility: visible;
+  opacity: 1;
+}
+
+._3w_5u {
+  fill: #ddd;
+  cursor: ew-resize;
+  opacity: 0;
+  visibility: hidden;
+}
+
+._31ERP {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  stroke-width: 0;
+}
+
+._RRr13 {
+  cursor: pointer;
+  outline: none;
+}
+
+._2P2B1 {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+._1KJ6x {
+  cursor: pointer;
+  outline: none;
+}
+
+._2RbVy {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  opacity: 1 !important;
+}
+
+._2pZMF {
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+._3zRJQ {
+  fill: #fff;
+  text-anchor: middle;
+  font-weight: lighter;
+  dominant-baseline: central;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+._3KcaM {
+  fill: #555;
+  text-anchor: start;
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  pointer-events: none;
+}
+
+._CZjuD {
+  overflow: hidden;
+  font-size: 0;
+  margin: 0;
+  padding: 0;
+}
+
+._2B2zv {
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+._3eULf {
+  display: flex;
+  padding: 0;
+  margin: 0;
+  list-style: none;
+  outline: none;
+  position: relative;
+}
+
+._2k9Ys {
+  overflow: auto;
+  max-width: 100%;
+  /*firefox*/
+  scrollbar-width: thin;
+  /*iPad*/
+  height: 1.2rem;
+}
+._2k9Ys::-webkit-scrollbar {
+  width: 1.1rem;
+  height: 1.1rem;
+}
+._2k9Ys::-webkit-scrollbar-corner {
+  background: transparent;
+}
+._2k9Ys::-webkit-scrollbar-thumb {
+  border: 6px solid transparent;
+  background: rgba(0, 0, 0, 0.2);
+  background: var(--palette-black-alpha-20, rgba(0, 0, 0, 0.2));
+  border-radius: 10px;
+  background-clip: padding-box;
+}
+._2k9Ys::-webkit-scrollbar-thumb:hover {
+  border: 4px solid transparent;
+  background: rgba(0, 0, 0, 0.3);
+  background: var(--palette-black-alpha-30, rgba(0, 0, 0, 0.3));
+  background-clip: padding-box;
+}
+@media only screen and (max-device-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
+}
+._19jgW {
+  height: 1px;
+}

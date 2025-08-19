@@ -1,0 +1,19 @@
+{
+    "name": "rbs-03/lazytasks-whiteboard",
+    "autoload": {
+        "psr-4": {
+            "LazytasksWhiteboard\\": "src/"
+        }
+    },
+    "authors": [
+        {
+            "name": "Lazycoders",
+            "email": "info@lazycoders.co"
+        }
+    ],
+    "require": {
+        "php": ">=7.4",
+        "ext-json": "*",
+        "chillerlan/php-qrcode": "^5.0.2"
+    }
+}

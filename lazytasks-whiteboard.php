@@ -23,6 +23,7 @@
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       lazytasks-whiteboard
  * Domain Path:       /languages
+ * Requires Plugins:  lazytasks-project-task-management
  */
 
 // If this file is called directly, abort.
@@ -36,6 +37,10 @@ if ( ! defined( 'WPINC' ) ) {
  * Rename this for your plugin and update it as you release new versions.
  */
 define( 'LAZYTASKS_WHITEBOARD_VERSION', '1.0.0' );
+define( 'LAZYTASKS_WHITEBOARD_DB_VERSION', '1.0.0' );
+
+global $wpdb;
+define( 'LAZYTASKS_WHITEBOARD_TABLE_PREFIX', $wpdb->prefix .'pms_whiteboard_' );
 
 /**
  * The code that runs during plugin activation.
@@ -80,3 +85,5 @@ function run_lazytasks_whiteboard() {
 
 }
 run_lazytasks_whiteboard();
+
+require_once "vendor/autoload.php";

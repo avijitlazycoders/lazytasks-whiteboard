@@ -31,6 +31,18 @@ class Lazytasks_Whiteboard_Activator {
 	 */
 	public static function activate() {
 
+		$installed = get_option('lazytasks_whiteboard_installed');
+
+		if ($installed) return;
+
+		\LazytasksWhiteboard\Helper\Lazytasks_whiteboard_DatabaseTableSchema::run();
+
+		if( !defined('LAZYTASKS_WHITEBOARD_DB_VERSION') || get_option('lazytasks_whiteboard_db_version')==='' || version_compare(get_option('lazytasks_whiteboard_db_version'), LAZYTASKS_WHITEBOARD_DB_VERSION, '<') ) {
+			update_option('lazytasks_whiteboard_db_version', LAZYTASKS_WHITEBOARD_DB_VERSION, 'no');
+			\LazytasksWhiteboard\Helper\Lazytasks_Whiteboard_DBMigrator::run();
+		}
+
+		add_option('lazytasks_whiteboard_installed', true);
 	}
 
 }
