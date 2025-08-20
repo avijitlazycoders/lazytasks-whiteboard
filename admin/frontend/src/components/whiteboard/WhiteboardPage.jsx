@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor } from "@mantine/core";
+import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor, Tooltip } from "@mantine/core";
 import { useSelector, useDispatch } from "react-redux";
 import { Excalidraw, Footer, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw';
 import {
@@ -12,7 +12,7 @@ import {
 } from "./store/whiteboardSlice";
 import { translate } from '../../utils/i18n';
 import { showNotification } from '@mantine/notifications';
-import { IconMessage, IconMessageCircle, IconSend, IconTrash } from '@tabler/icons-react';
+import { IconDeviceFloppy, IconMessage, IconMessageCircle, IconSend, IconTrash } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import WhiteboardComments from './WhiteboardComments';
 
@@ -20,11 +20,13 @@ const WhiteboardPage = ({ project_id }) => {
     // const { project_id } = useParams();
     const dispatch = useDispatch();
 
-    dispatch(setLoggedInUser(window.loggedInUser));
+    useEffect(() => {
+        if (window.loggedInUser) {
+            dispatch(setLoggedInUser(window.loggedInUser));
+        }
+    }, [dispatch]);
 
-    const { isLoading, projectWhiteboard, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
-    // const { loggedUserId } = useSelector((state) => state.auth.user);
-    // const { loggedInUser } = useSelector((state) => state.auth.session);   
+    const { isLoading, projectWhiteboard, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard); 
 
     const excalidrawRef = useRef(null);
     const [submitting, setSubmitting] = useState(false);
@@ -232,7 +234,7 @@ const WhiteboardPage = ({ project_id }) => {
 
     return (
         <>
-            <Box style={{ width: '100%', height: '92vh', position: 'relative' }}>
+            <Box style={{ width: '100%', height: '73vh', position: 'relative' }}>
                 <LoadingOverlay visible={isLoading} />
 
                 <Excalidraw
@@ -242,7 +244,8 @@ const WhiteboardPage = ({ project_id }) => {
                     initialData={initialData}
                     renderTopRightUI={() => {
                         return (
-                            <>
+                            <>  
+                            <Tooltip label={translate('Add Comment')} position="top" withArrow withinPortal={false}>
                                 <Button
                                     size="sm"
                                     color={"#EBF1F4"}
@@ -255,13 +258,16 @@ const WhiteboardPage = ({ project_id }) => {
                                 >
                                     <IconMessageCircle stroke={1.25} size={24} color={"#202020"} className="mr-1" />
                                 </Button>
+                            </Tooltip>
+                            <Tooltip label={translate('Save Whiteboard')} position="top" withArrow withinPortal={false}>
                                 <Button size="md" h={34} className={`font-semibold`} onClick={handleSave} variant="filled"
                                     color="#ED7D31" loaderProps={{ type: 'dots' }}
                                     loading={submitting}
                                     disabled={submitting}
                                 >
-                                    {translate('Save')}
+                                    <IconDeviceFloppy stroke={1.25} size={24} className="mr-1" />
                                 </Button>
+                            </Tooltip>
                             </>
                         );
                     }}
