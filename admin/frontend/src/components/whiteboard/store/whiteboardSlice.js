@@ -61,6 +61,7 @@ const initialState = {
     licenseSuccessMessage: null,
     projectWhiteboard:{},
     projectWhiteboardComments:[],
+    loggedInUser: {},
 }
 
 const whiteboardSlice = createSlice({
@@ -73,6 +74,9 @@ const whiteboardSlice = createSlice({
         removeErrorMessage: (state) => {
             state.error = ''
             state.isLicenseError = false
+        },
+        setLoggedInUser: (state, action) => {
+            state.loggedInUser = action.payload
         }
     },
     extraReducers: (builder) => {
@@ -166,6 +170,7 @@ const whiteboardSlice = createSlice({
 })
 export const {
     removeSuccessMessage,
-    removeErrorMessage
+    removeErrorMessage,
+    setLoggedInUser
 } = whiteboardSlice.actions
 export default whiteboardSlice.reducer

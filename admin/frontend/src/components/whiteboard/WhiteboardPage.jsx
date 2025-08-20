@@ -8,6 +8,7 @@ import {
     saveProjectWhiteboard,
     saveWhiteboardComment,
     fetchWhiteboardComments,
+    setLoggedInUser,
 } from "./store/whiteboardSlice";
 import { translate } from '../../utils/i18n';
 import { showNotification } from '@mantine/notifications';
@@ -17,14 +18,14 @@ import WhiteboardComments from './WhiteboardComments';
 
 const WhiteboardPage = ({ project_id }) => {
     // const { project_id } = useParams();
-    const { isLoading } = useSelector((state) => state.whiteboard.whiteboard);
-    const { projectWhiteboard, projectWhiteboardComments } = useSelector((state) => state.whiteboard.whiteboard);
-    // const { loggedUserId } = useSelector((state) => state.auth.user);
-    // const { loggedInUser } = useSelector((state) => state.auth.session);
-    const { loggedInUser } = 1;
-    const { loggedUserId } = 1;
-
     const dispatch = useDispatch();
+
+    dispatch(setLoggedInUser(window.loggedInUser));
+
+    const { isLoading, projectWhiteboard, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
+    // const { loggedUserId } = useSelector((state) => state.auth.user);
+    // const { loggedInUser } = useSelector((state) => state.auth.session);   
+
     const excalidrawRef = useRef(null);
     const [submitting, setSubmitting] = useState(false);
     const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -193,7 +194,7 @@ const WhiteboardPage = ({ project_id }) => {
             comments_coordinates: commentPoint,
             comment: commentText,
             created_by: 1,
-            // created_by: loggedInUser ? loggedInUser.loggedUserId : loggedUserId,
+            created_by: loggedInUser ? loggedInUser.loggedUserId : '',
         };
         console.log('Adding comment:', newComment);
         dispatch(saveWhiteboardComment({ id: project_id, data: newComment })).then((response) => {

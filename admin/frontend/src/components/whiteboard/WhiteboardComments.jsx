@@ -21,11 +21,8 @@ const WhiteboardComments = ({
 }) => {
     // const { id } = useParams();
     const dispatch = useDispatch();
-    // const { loggedUserId } = useSelector((state) => state.auth.user);
-    // const { loggedInUser } = useSelector((state) => state.auth.session);
-
-    const { loggedInUser } = 1;
-    const { loggedUserId } = 1;
+    
+    const { loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
 
     const [hoveredCommentId, setHoveredCommentId] = useState(null);
     const [openCommentPopoverId, setOpenCommentPopoverId] = useState(null);
@@ -81,7 +78,7 @@ const WhiteboardComments = ({
                     disallowClose: true,
                     color: 'green',
                 });
-                dispatch(deleteWhiteboardComments({ id:project_id, data: { comment_id: openCommentPopoverId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : loggedUserId, 'type': 'comment' } })).then((response) => {
+                dispatch(deleteWhiteboardComments({ id:project_id, data: { comment_id: openCommentPopoverId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '', 'type': 'comment' } })).then((response) => {
                     if (response.payload.status === 200) {
                         updateNotification({
                             id: 'load-data',
@@ -123,7 +120,7 @@ const WhiteboardComments = ({
                     disallowClose: true,
                     color: 'green',
                 });
-                dispatch(deleteWhiteboardComments({ id:project_id, data: { comment_id: replyId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : loggedUserId, 'type': 'reply' } })).then((response) => {
+                dispatch(deleteWhiteboardComments({ id:project_id, data: { comment_id: replyId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '', 'type': 'reply' } })).then((response) => {
                     if (response.payload.status === 200) {
                         updateNotification({
                             id: 'load-data',
@@ -150,7 +147,7 @@ const WhiteboardComments = ({
             parent_id: openCommentPopoverId,
             comments_coordinates: replyPoint,
             comment: replyText,
-            created_by: loggedInUser ? loggedInUser.loggedUserId : loggedUserId,
+            created_by: loggedInUser ? loggedInUser.loggedUserId : '',
         };
 
         dispatch(saveWhiteboardComment({ id:project_id, data: newComment })).then((response) => {
@@ -181,7 +178,7 @@ const WhiteboardComments = ({
                 comment_id: c_id,
                 comment: editText,
                 type: type,
-                updated_by: loggedInUser ? loggedInUser.loggedUserId : loggedUserId,
+                updated_by: loggedInUser ? loggedInUser.loggedUserId : '',
             }
         })).then((response) => {
             setEditLoading(false);
@@ -250,7 +247,7 @@ const WhiteboardComments = ({
                     comment_id: comment.id,
                     comments_coordinates: newCanvas,
                     type: 'comment',
-                    updated_by: loggedInUser ? loggedInUser.loggedUserId : loggedUserId,
+                    updated_by: loggedInUser ? loggedInUser.loggedUserId : '',
                 }
             })).then(() => {
                 // dispatch(fetchWhiteboardComments(id));
@@ -264,7 +261,7 @@ const WhiteboardComments = ({
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [draggingId, dragOffset, comments, project_id, dispatch, loggedInUser, loggedUserId, screenToCanvas]);
+    }, [draggingId, dragOffset, comments, project_id, dispatch, loggedInUser, screenToCanvas]);
 
     return (
         <>
