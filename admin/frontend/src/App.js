@@ -52,7 +52,7 @@ const App = () => {
         }
     }, []);
 
-    return false;
+    return null;
 }
 
 export default App;

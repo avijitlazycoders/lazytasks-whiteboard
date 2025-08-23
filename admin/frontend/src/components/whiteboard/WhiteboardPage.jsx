@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor, Tooltip, ActionIcon } from "@mantine/core";
+import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor, Tooltip, ActionIcon, Modal } from "@mantine/core";
 import { useSelector, useDispatch } from "react-redux";
-import { Excalidraw, Footer, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw';
+import { Excalidraw, Footer, MainMenu, Sidebar, WelcomeScreen } from '@excalidraw/excalidraw';
 import {
     fetchProjectWhiteboard,
     saveProjectWhiteboard,
@@ -12,8 +12,8 @@ import {
 } from "./store/whiteboardSlice";
 import { translate } from '../../utils/i18n';
 import { showNotification } from '@mantine/notifications';
-import { IconDeviceFloppy, IconMessage, IconMessage2, IconMessageCircle, IconSend, IconTrash } from '@tabler/icons-react';
-import { useDisclosure } from '@mantine/hooks';
+import { IconCircleArrowLeft, IconDeviceFloppy, IconMessage, IconMessage2, IconMessageCircle, IconSend, IconTrash } from '@tabler/icons-react';
+import { modals } from '@mantine/modals';
 import WhiteboardComments from './WhiteboardComments';
 import { hasPermission } from '../ui/permissions';
 
@@ -44,6 +44,8 @@ const WhiteboardPage = ({ project_id }) => {
     const [hoveredCommentId, setHoveredCommentId] = useState(null);
     const [excalidrawAppState, setExcalidrawAppState] = useState({ zoom: 1, scrollX: 0, scrollY: 0 });
     const [addLoading, setAddLoading] = useState(false);
+
+    const [docked, setDocked] = useState(false);
 
     const isSceneEqual = (sceneA, sceneB) => {
         return (
@@ -223,6 +225,20 @@ const WhiteboardPage = ({ project_id }) => {
         });
     };
 
+    const handleReset = () => {
+        if (excalidrawRef.current) {
+            excalidrawRef.current.updateScene({
+                elements: [],
+                appState: {
+                    ...excalidrawRef.current.getAppState(),
+                    // Optionally reset more appState fields if needed
+                },
+                files: {},
+            });
+            setHasUnsavedChanges(true); // Mark as unsaved if you want
+        }
+    };
+
     const { zoom, scrollX, scrollY } = excalidrawAppState;
     // const getTransformedCoords = (coords) => ({
     //     x: coords.x * zoom + scrollX,
@@ -274,6 +290,18 @@ const WhiteboardPage = ({ project_id }) => {
                                         <IconDeviceFloppy stroke={1.25} size={22} />
                                     </ActionIcon>
                                 </Tooltip>
+                                <Tooltip label={translate('Reset Whiteboard')} position="top" withArrow withinPortal={false}>
+                                    <ActionIcon
+                                        onClick={handleReset}
+                                        variant="filled" color={"#EBF1F4"} size="lg"
+                                        aria-label="Settings"
+                                        loaderProps={{ type: 'dots' }}
+                                    >
+                                        <IconTrash stroke={1.25} size={22} color={"#202020"} />
+                                    </ActionIcon>
+                                </Tooltip>
+
+
                             </>
                         );
                     }}
@@ -293,6 +321,7 @@ const WhiteboardPage = ({ project_id }) => {
                             <WelcomeScreen.Hints.HelpHint />
                         </WelcomeScreen.Center>
                     </WelcomeScreen>
+
                     <Footer>
                         <Group gap={6} ml={10}>
                             {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-comments']) && (
@@ -318,6 +347,7 @@ const WhiteboardPage = ({ project_id }) => {
                                     <IconDeviceFloppy stroke={1.25} size={22} />
                                 </ActionIcon>
                             </Tooltip>
+
                         </Group>
                         <Group justify='flex-end' mr={10} style={{ flex: 1 }}>
                             <Text size="sm" c="dimmed" ta="right" fw={500} mt={8} ml={10}>
@@ -337,7 +367,6 @@ const WhiteboardPage = ({ project_id }) => {
                     </Footer>
 
                 </Excalidraw>
-
 
                 {/* Overlay for comment mode */}
                 {commentMode && (

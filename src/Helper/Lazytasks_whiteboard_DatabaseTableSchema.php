@@ -15,13 +15,14 @@ class Lazytasks_whiteboard_DatabaseTableSchema {
 	private static function add_project_whiteboards_table()
 	{
 		global $wpdb;
-		$table_name = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'project_whiteboards';
+		$table_name = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'boards';
 
 		$table_generate_query = "
 	        CREATE TABLE IF NOT EXISTS `". $table_name ."` (
   `id` bigint unsigned NOT NULL AUTO_INCREMENT,
   `project_id` bigint unsigned DEFAULT NULL,
   `created_by` bigint unsigned DEFAULT NULL,
+  `whiteboard_name` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'Default Whiteboard',
   `data` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
@@ -66,7 +67,7 @@ class Lazytasks_whiteboard_DatabaseTableSchema {
 	public static function add_whiteboard_comments_table()
 	{
 		global $wpdb;
-		$table_name = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'whiteboard_comments';
+		$table_name = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'comments';
 
 		$table_generate_query = "
 	        CREATE TABLE IF NOT EXISTS `". $table_name ."` (
@@ -77,6 +78,7 @@ class Lazytasks_whiteboard_DatabaseTableSchema {
   `created_by` bigint unsigned DEFAULT NULL,
   `comments_coordinates` text COLLATE utf8mb4_unicode_ci NOT NULL,
   `comment` longtext COLLATE utf8mb4_unicode_ci NOT NULL,
+  `status` varchar(20) COLLATE utf8mb4_unicode_ci NOT NULL DEFAULT 'ACTIVE',
   `created_at` timestamp NULL DEFAULT NULL,
   `updated_at` timestamp NULL DEFAULT NULL,
   `deleted_at` timestamp NULL DEFAULT NULL,

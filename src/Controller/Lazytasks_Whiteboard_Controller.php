@@ -16,7 +16,7 @@ class Lazytasks_Whiteboard_Controller {
 		}
 
 		$projectsTable = LAZYTASK_TABLE_PREFIX . 'projects';
-		$whiteboardTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'project_whiteboards';
+		$whiteboardTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'boards';
 
 		// Check if project exists
 		$projectExists = $wpdb->get_var($wpdb->prepare(
@@ -53,7 +53,7 @@ class Lazytasks_Whiteboard_Controller {
 	public function updateWhiteboardContentByProjectId(WP_REST_Request $request)
 	{
 		global $wpdb;
-		$whiteboardTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'project_whiteboards';
+		$whiteboardTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'boards';
 		$projectsTable = LAZYTASK_TABLE_PREFIX . 'projects';
 		$projectId = $request->get_param('id');
 
@@ -172,8 +172,8 @@ class Lazytasks_Whiteboard_Controller {
 	public function addWhiteboardComment(WP_REST_Request $request)
 	{
 		global $wpdb;
-		$whiteboardTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'project_whiteboards';
-		$whiteboardCommentsTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'whiteboard_comments';
+		$whiteboardTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'boards';
+		$whiteboardCommentsTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'comments';
 		$projectId = $request->get_param('id');
 
 		if (!$projectId) {
@@ -233,8 +233,8 @@ class Lazytasks_Whiteboard_Controller {
 	public function getwhiteboardComments(WP_REST_Request $request)
 	{
 		global $wpdb;
-		$whiteboardTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'project_whiteboards';
-		$whiteboardCommentsTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'whiteboard_comments';
+		$whiteboardTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'boards';
+		$whiteboardCommentsTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'comments';
 		$projectId = $request->get_param('id');
 
 		if (!$projectId) {
@@ -251,7 +251,7 @@ class Lazytasks_Whiteboard_Controller {
 	public function deleteWhiteboardComment(WP_REST_Request $request)
 	{
 		global $wpdb;
-		$whiteboardCommentsTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'whiteboard_comments';
+		$whiteboardCommentsTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'comments';
 		$projectId = $request->get_param('id');
 
 		if (!$projectId) {
@@ -304,7 +304,7 @@ class Lazytasks_Whiteboard_Controller {
 	public function editWhiteboardComment(WP_REST_Request $request)
 	{
 		global $wpdb;
-		$whiteboardCommentsTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'whiteboard_comments';
+		$whiteboardCommentsTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'comments';
 		$projectId = $request->get_param('id');
 
 		if (!$projectId) {
