@@ -13,6 +13,7 @@ import {
 } from "./store/whiteboardSlice";
 import { showNotification, updateNotification } from '@mantine/notifications';
 import { modals } from '@mantine/modals';
+import { hasPermission } from '../ui/permissions';
 
 const WhiteboardComments = ({
     project_id,
@@ -21,7 +22,7 @@ const WhiteboardComments = ({
 }) => {
     // const { id } = useParams();
     const dispatch = useDispatch();
-    
+
     const { loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
 
     const [hoveredCommentId, setHoveredCommentId] = useState(null);
@@ -38,6 +39,8 @@ const WhiteboardComments = ({
     const [draggingId, setDraggingId] = useState(null);
     const [dragOffset, setDragOffset] = useState({ x: 0, y: 0 });
     const [draggedPos, setDraggedPos] = useState(null);
+    const [mouseDownPos, setMouseDownPos] = useState(null);
+    const [wasDrag, setWasDrag] = useState(false);
 
     const avatarRef = useRef(null);
 
@@ -78,7 +81,7 @@ const WhiteboardComments = ({
                     disallowClose: true,
                     color: 'green',
                 });
-                dispatch(deleteWhiteboardComments({ id:project_id, data: { comment_id: openCommentPopoverId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '', 'type': 'comment' } })).then((response) => {
+                dispatch(deleteWhiteboardComments({ id: project_id, data: { comment_id: openCommentPopoverId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '', 'type': 'comment' } })).then((response) => {
                     if (response.payload.status === 200) {
                         updateNotification({
                             id: 'load-data',
@@ -120,7 +123,7 @@ const WhiteboardComments = ({
                     disallowClose: true,
                     color: 'green',
                 });
-                dispatch(deleteWhiteboardComments({ id:project_id, data: { comment_id: replyId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '', 'type': 'reply' } })).then((response) => {
+                dispatch(deleteWhiteboardComments({ id: project_id, data: { comment_id: replyId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '', 'type': 'reply' } })).then((response) => {
                     if (response.payload.status === 200) {
                         updateNotification({
                             id: 'load-data',
@@ -150,7 +153,7 @@ const WhiteboardComments = ({
             created_by: loggedInUser ? loggedInUser.loggedUserId : '',
         };
 
-        dispatch(saveWhiteboardComment({ id:project_id, data: newComment })).then((response) => {
+        dispatch(saveWhiteboardComment({ id: project_id, data: newComment })).then((response) => {
             setAddLoading(false);
             if (response.payload.status === 200) {
                 showNotification({
@@ -173,7 +176,7 @@ const WhiteboardComments = ({
         if (!editText.trim()) return;
         setEditLoading(true);
         dispatch(updateWhiteboardComment({
-            id:project_id,
+            id: project_id,
             data: {
                 comment_id: c_id,
                 comment: editText,
@@ -201,12 +204,17 @@ const WhiteboardComments = ({
     // Drag handlers
     const handleMouseDown = (e, commentId, coords) => {
         e.stopPropagation();
+        if (openCommentPopoverId === commentId) {
+            setOpenCommentPopoverId(null);
+        }
+        setMouseDownPos({ x: e.clientX, y: e.clientY });
         setDraggingId(commentId);
         setDragOffset({
             x: e.clientX - canvasToScreen(coords).x,
             y: e.clientY - canvasToScreen(coords).y,
         });
         setDraggedPos(canvasToScreen(coords));
+        setWasDrag(false);
     };
 
     useEffect(() => {
@@ -216,6 +224,13 @@ const WhiteboardComments = ({
         }
 
         const handleMouseMove = (e) => {
+            if (
+                mouseDownPos &&
+                (Math.abs(e.clientX - mouseDownPos.x) > 5 ||
+                    Math.abs(e.clientY - mouseDownPos.y) > 5)
+            ) {
+                setWasDrag(true);
+            }
             // Move avatar visually
             setDraggedPos({
                 x: e.clientX - dragOffset.x,
@@ -224,34 +239,44 @@ const WhiteboardComments = ({
         };
 
         const handleMouseUp = (e) => {
-            // Find the comment being dragged
-            const comment = comments.find(c => (c.id || comments.indexOf(c)) === draggingId);
-            if (!comment) {
+            if (
+                mouseDownPos &&
+                (Math.abs(e.clientX - mouseDownPos.x) > 5 ||
+                    Math.abs(e.clientY - mouseDownPos.y) > 5)
+            ) {
+                // Find the comment being dragged
+                const comment = comments.find(c => (c.id || comments.indexOf(c)) === draggingId);
+                if (!comment) {
+                    setDraggingId(null);
+                    setDraggedPos(null);
+                    return;
+                }
+                // Convert to canvas coordinates
+                const newCanvas = screenToCanvas({
+                    x: e.clientX - dragOffset.x,
+                    y: e.clientY - dragOffset.y,
+                });
+
                 setDraggingId(null);
                 setDraggedPos(null);
-                return;
+
+                // Save to backend
+                dispatch(updateWhiteboardComment({
+                    id: project_id,
+                    data: {
+                        comment_id: comment.id,
+                        comments_coordinates: newCanvas,
+                        type: 'comment',
+                        updated_by: loggedInUser ? loggedInUser.loggedUserId : '',
+                    }
+                })).then(() => {
+                    // dispatch(fetchWhiteboardComments(id));
+                });
+            } else {
+                setDraggingId(null);
+                setDraggedPos(null);
             }
-            // Convert to canvas coordinates
-            const newCanvas = screenToCanvas({
-                x: e.clientX - dragOffset.x,
-                y: e.clientY - dragOffset.y,
-            });
-
-            setDraggingId(null);
-            setDraggedPos(null);
-
-            // Save to backend
-            dispatch(updateWhiteboardComment({
-                id:project_id,
-                data: {
-                    comment_id: comment.id,
-                    comments_coordinates: newCanvas,
-                    type: 'comment',
-                    updated_by: loggedInUser ? loggedInUser.loggedUserId : '',
-                }
-            })).then(() => {
-                // dispatch(fetchWhiteboardComments(id));
-            });
+            setMouseDownPos(null);
         };
 
         window.addEventListener('mousemove', handleMouseMove);
@@ -261,7 +286,7 @@ const WhiteboardComments = ({
             window.removeEventListener('mousemove', handleMouseMove);
             window.removeEventListener('mouseup', handleMouseUp);
         };
-    }, [draggingId, dragOffset, comments, project_id, dispatch, loggedInUser, screenToCanvas]);
+    }, [draggingId, dragOffset, comments, project_id, dispatch, loggedInUser, screenToCanvas, mouseDownPos]);
 
     return (
         <>
@@ -317,10 +342,16 @@ const WhiteboardComments = ({
                                     onMouseEnter={() => setHoveredCommentId(commentId)}
                                     onMouseLeave={() => setHoveredCommentId(null)}
                                     onClick={() => {
-                                        setOpenCommentPopoverId(commentId);
-                                        setReplyPoint(transformed);
+                                        if (!wasDrag) {
+                                            setOpenCommentPopoverId(commentId);
+                                            setReplyPoint(transformed);
+                                        }
                                     }}
-                                    onMouseDown={e => handleMouseDown(e, commentId, coords)}
+                                    onMouseDown={e => {
+                                        if (hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-comments'])) {
+                                            handleMouseDown(e, commentId, coords);
+                                        }
+                                    }}
                                     onDragStart={e => e.preventDefault()}
                                 >
                                     {!userImage && userName.charAt(0).toUpperCase()}
@@ -354,10 +385,8 @@ const WhiteboardComments = ({
                             position="right"
                             withArrow
                             shadow="md"
-                            opened={openCommentPopoverId === commentId}
+                            opened={openCommentPopoverId === commentId && hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-comments'])}
                             onClose={() => setOpenCommentPopoverId(null)}
-                            
-                            
                         >
                             <Popover.Target>
                                 {/* Use a hidden anchor div at the avatar position */}
@@ -371,6 +400,8 @@ const WhiteboardComments = ({
                                         width: 1,
                                         height: 1,
                                         zIndex: 12,
+                                        transition: 'left 0.2s cubic-bezier(0.4,0,0.2,1), top 0.2s cubic-bezier(0.4,0,0.2,1)',
+                                        pointerEvents: 'none',
                                     }}
                                 />
                             </Popover.Target>
@@ -384,8 +415,10 @@ const WhiteboardComments = ({
                                 <Card padding="sm" withBorder radius="md" shadow='md'>
                                     <Card.Section withBorder inheritPadding py="xs" className="bg-[#FDFDFD] mb-2">
                                         <Group justify='flex-end' gap={6} align='center'>
-                                            <ActionIcon variant="transparent" color="red" aria-label="Settings">
-                                                <IconTrash size={18} stroke={1.25} onClick={handleDeleteComment} />
+                                            <ActionIcon variant="transparent" color="red" aria-label="Settings"
+                                                onClick={handleDeleteComment}
+                                            >
+                                                <IconTrash size={18} stroke={1.25} />
                                             </ActionIcon>
                                             <CloseButton
                                                 size="md"

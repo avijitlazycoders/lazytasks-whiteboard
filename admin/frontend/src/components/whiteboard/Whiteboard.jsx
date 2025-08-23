@@ -27,7 +27,7 @@ const Whiteboard = () => {
             fontFamily: 'Open Sans, sans-serif',
             fontSize: '16px',
         },
-    
+
     })
     return (
         <Provider store={store}>

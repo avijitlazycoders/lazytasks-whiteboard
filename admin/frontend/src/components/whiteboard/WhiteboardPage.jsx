@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor, Tooltip } from "@mantine/core";
+import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor, Tooltip, ActionIcon } from "@mantine/core";
 import { useSelector, useDispatch } from "react-redux";
 import { Excalidraw, Footer, MainMenu, WelcomeScreen } from '@excalidraw/excalidraw';
 import {
@@ -12,9 +12,10 @@ import {
 } from "./store/whiteboardSlice";
 import { translate } from '../../utils/i18n';
 import { showNotification } from '@mantine/notifications';
-import { IconDeviceFloppy, IconMessage, IconMessageCircle, IconSend, IconTrash } from '@tabler/icons-react';
+import { IconDeviceFloppy, IconMessage, IconMessage2, IconMessageCircle, IconSend, IconTrash } from '@tabler/icons-react';
 import { useDisclosure } from '@mantine/hooks';
 import WhiteboardComments from './WhiteboardComments';
+import { hasPermission } from '../ui/permissions';
 
 const WhiteboardPage = ({ project_id }) => {
     // const { project_id } = useParams();
@@ -26,7 +27,7 @@ const WhiteboardPage = ({ project_id }) => {
         }
     }, [dispatch]);
 
-    const { isLoading, projectWhiteboard, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard); 
+    const { isLoading, projectWhiteboard, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
 
     const excalidrawRef = useRef(null);
     const [submitting, setSubmitting] = useState(false);
@@ -70,18 +71,18 @@ const WhiteboardPage = ({ project_id }) => {
         });
     }, []);
 
-    // useEffect(() => {
-    //     const handleBeforeUnload = (e) => {
-    //         if (hasUnsavedChanges) {
-    //             e.preventDefault();
-    //             e.returnValue = '';
-    //         }
-    //     };
-    //     window.addEventListener('beforeunload', handleBeforeUnload);
-    //     return () => {
-    //         window.removeEventListener('beforeunload', handleBeforeUnload);
-    //     };
-    // }, [hasUnsavedChanges]);
+    useEffect(() => {
+        const handleBeforeUnload = (e) => {
+            if (hasUnsavedChanges) {
+                e.preventDefault();
+                e.returnValue = '';
+            }
+        };
+        window.addEventListener('beforeunload', handleBeforeUnload);
+        return () => {
+            window.removeEventListener('beforeunload', handleBeforeUnload);
+        };
+    }, [hasUnsavedChanges]);
 
     const initialData = projectWhiteboard && projectWhiteboard.elements ? projectWhiteboard : null;
 
@@ -93,7 +94,7 @@ const WhiteboardPage = ({ project_id }) => {
     }, [initialData]);
 
     const handleChange = (elements, appState) => {
-        setHasUnsavedChanges(true);
+        // setHasUnsavedChanges(true);
         const scene = {
             elements,
             appState: {
@@ -198,7 +199,7 @@ const WhiteboardPage = ({ project_id }) => {
             created_by: 1,
             created_by: loggedInUser ? loggedInUser.loggedUserId : '',
         };
-        console.log('Adding comment:', newComment);
+
         dispatch(saveWhiteboardComment({ id: project_id, data: newComment })).then((response) => {
             console.log('response:', response);
             setAddLoading(false);
@@ -231,6 +232,10 @@ const WhiteboardPage = ({ project_id }) => {
         x: (coords.x + scrollX) * zoom,
         y: (coords.y + scrollY) * zoom,
     });
+    const viewModeEnabled = !hasPermission(
+        loggedInUser && loggedInUser.llc_permissions,
+        ['whiteboard-manage']
+    );
 
     return (
         <>
@@ -242,35 +247,37 @@ const WhiteboardPage = ({ project_id }) => {
                     ref={excalidrawRef}
                     onChange={handleChange}
                     initialData={initialData}
+                    viewModeEnabled={viewModeEnabled}
                     renderTopRightUI={() => {
                         return (
-                            <>  
-                            <Tooltip label={translate('Add Comment')} position="top" withArrow withinPortal={false}>
-                                <Button
-                                    size="sm"
-                                    color={"#EBF1F4"}
-                                    styles={{
-                                        label: {
-                                            color: "#202020"
-                                        }
-                                    }}
-                                    onClick={() => setCommentMode(!commentMode)}
-                                >
-                                    <IconMessageCircle stroke={1.25} size={24} color={"#202020"} className="mr-1" />
-                                </Button>
-                            </Tooltip>
-                            <Tooltip label={translate('Save Whiteboard')} position="top" withArrow withinPortal={false}>
-                                <Button size="md" h={34} className={`font-semibold`} onClick={handleSave} variant="filled"
-                                    color="#ED7D31" loaderProps={{ type: 'dots' }}
-                                    loading={submitting}
-                                    disabled={submitting}
-                                >
-                                    <IconDeviceFloppy stroke={1.25} size={24} className="mr-1" />
-                                </Button>
-                            </Tooltip>
+                            <>
+                                {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-comments']) && (
+                                    <Tooltip label={translate('Add Comment')} position="top" withArrow withinPortal={false}>
+                                        <ActionIcon
+                                            onClick={() => setCommentMode(!commentMode)}
+                                            variant="filled" color={"#EBF1F4"} size="lg"
+                                            aria-label="Settings"
+                                        >
+                                            <IconMessage2 stroke={1.25} size={22} color={"#202020"} />
+                                        </ActionIcon>
+                                    </Tooltip>
+                                )}
+                                <Tooltip label={translate('Save Whiteboard')} position="top" withArrow withinPortal={false}>
+                                    <ActionIcon
+                                        onClick={handleSave}
+                                        variant="filled" color={"#ED7D31"} size="lg"
+                                        aria-label="Settings"
+                                        loaderProps={{ type: 'dots' }}
+                                        loading={submitting}
+                                        disabled={submitting}
+                                    >
+                                        <IconDeviceFloppy stroke={1.25} size={22} />
+                                    </ActionIcon>
+                                </Tooltip>
                             </>
                         );
                     }}
+
                 >
                     <WelcomeScreen>
                         <WelcomeScreen.Center>
@@ -287,19 +294,46 @@ const WhiteboardPage = ({ project_id }) => {
                         </WelcomeScreen.Center>
                     </WelcomeScreen>
                     <Footer>
-                        <Text size="sm" c="dimmed" fw={500} mt={8} ml={10}>
-                            Powered by{" "}
-                            <Anchor
-                                href="https://excalidraw.com"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                underline
-                                c="#39758D"
-                                fw={600}
-                            >
-                                Excalidraw
-                            </Anchor>
-                        </Text>
+                        <Group gap={6} ml={10}>
+                            {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-comments']) && (
+                                <Tooltip label={translate('Add Comment')} position="top" withArrow withinPortal={false}>
+                                    <ActionIcon
+                                        onClick={() => setCommentMode(!commentMode)}
+                                        variant="filled" color={"#EBF1F4"} size="lg"
+                                        aria-label="Settings"
+                                    >
+                                        <IconMessage2 stroke={1.25} size={22} color={"#202020"} />
+                                    </ActionIcon>
+                                </Tooltip>
+                            )}
+                            <Tooltip label={translate('Save Whiteboard')} position="top" withArrow withinPortal={false}>
+                                <ActionIcon
+                                    onClick={handleSave}
+                                    variant="filled" color={"#ED7D31"} size="lg"
+                                    aria-label="Settings"
+                                    loaderProps={{ type: 'dots' }}
+                                    loading={submitting}
+                                    disabled={submitting}
+                                >
+                                    <IconDeviceFloppy stroke={1.25} size={22} />
+                                </ActionIcon>
+                            </Tooltip>
+                        </Group>
+                        <Group justify='flex-end' mr={10} style={{ flex: 1 }}>
+                            <Text size="sm" c="dimmed" ta="right" fw={500} mt={8} ml={10}>
+                                Powered by{" "}
+                                <Anchor
+                                    href="https://excalidraw.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    underline
+                                    c="#39758D"
+                                    fw={600}
+                                >
+                                    Excalidraw
+                                </Anchor>
+                            </Text>
+                        </Group>
                     </Footer>
 
                 </Excalidraw>
