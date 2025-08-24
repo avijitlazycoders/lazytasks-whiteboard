@@ -17,9 +17,9 @@ const WhietboardNav = ({project_id}) => {
                 onClick={() => setActive(true)}
                 variant="filled"
                 size="sm"
-                color={location==='#/project/whiteboard' ? "#fff" : "#000"}
+                color={location === url ? "#fff" : "#000"}
                 className={`rounded font-semibold text-black-600 bg:hover`}
-                style={{padding:"5px 20px", backgroundColor: location==='#/whiteboard' ? "#39758D" : "#EBF1F4",  color: location==='#/whiteboard' ? "#fff" : "#000"}}
+                style={{padding:"5px 20px", backgroundColor: location===url ? "#39758D" : "#EBF1F4",  color: location===url ? "#fff" : "#000"}}
             />
         </>
         

@@ -1,8 +1,8 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor, Tooltip, ActionIcon, Modal } from "@mantine/core";
+import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor, Tooltip, ActionIcon, Modal, ThemeIcon, Stack } from "@mantine/core";
 import { useSelector, useDispatch } from "react-redux";
-import { Excalidraw, Footer, MainMenu, Sidebar, WelcomeScreen } from '@excalidraw/excalidraw';
+import { Excalidraw, Footer, MainMenu, Sidebar, WelcomeScreen, Excalifont } from '@excalidraw/excalidraw';
 import {
     fetchProjectWhiteboard,
     saveProjectWhiteboard,
@@ -12,7 +12,7 @@ import {
 } from "./store/whiteboardSlice";
 import { translate } from '../../utils/i18n';
 import { showNotification } from '@mantine/notifications';
-import { IconCircleArrowLeft, IconDeviceFloppy, IconMessage, IconMessage2, IconMessageCircle, IconSend, IconTrash } from '@tabler/icons-react';
+import { IconCircleArrowLeft, IconCircleArrowUp, IconCircleArrowUpFilled, IconDeviceFloppy, IconExternalLink, IconMessage, IconMessage2, IconMessageCircle, IconRestore, IconSend, IconTrash } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import WhiteboardComments from './WhiteboardComments';
 import { hasPermission } from '../ui/permissions';
@@ -45,7 +45,7 @@ const WhiteboardPage = ({ project_id }) => {
     const [excalidrawAppState, setExcalidrawAppState] = useState({ zoom: 1, scrollX: 0, scrollY: 0 });
     const [addLoading, setAddLoading] = useState(false);
 
-    const [docked, setDocked] = useState(false);
+    const [saveModalOpen, setSaveModalOpen] = useState(false);
 
     const isSceneEqual = (sceneA, sceneB) => {
         return (
@@ -72,7 +72,7 @@ const WhiteboardPage = ({ project_id }) => {
             try { textareaRef.current?.setSelectionRange(len, len); } catch { }
         });
     }, []);
-
+    
     useEffect(() => {
         const handleBeforeUnload = (e) => {
             if (hasUnsavedChanges) {
@@ -96,7 +96,7 @@ const WhiteboardPage = ({ project_id }) => {
     }, [initialData]);
 
     const handleChange = (elements, appState) => {
-        // setHasUnsavedChanges(true);
+        setHasUnsavedChanges(true);
         const scene = {
             elements,
             appState: {
@@ -155,6 +155,7 @@ const WhiteboardPage = ({ project_id }) => {
                     disallowClose: true,
                     color: 'green',
                 });
+                setSaveModalOpen(false);
             } else {
                 setSubmitting(false);
                 console.error('Failed to save whiteboard:', response.payload.message);
@@ -183,8 +184,6 @@ const WhiteboardPage = ({ project_id }) => {
         const y = e.clientY - rect.top;
 
         const canvasPoint = screenToCanvasCoords({ x, y }, excalidrawAppState);
-        console.log('Canvas click at:', canvasPoint);
-        console.log('Canvas click at:', x, y);
         setCommentPoint(canvasPoint);
         setPopoverPosition({ x, y });
         setPopoverOpened(true);
@@ -203,7 +202,7 @@ const WhiteboardPage = ({ project_id }) => {
         };
 
         dispatch(saveWhiteboardComment({ id: project_id, data: newComment })).then((response) => {
-            console.log('response:', response);
+
             setAddLoading(false);
             if (response.payload.status === 200) {
                 showNotification({
@@ -235,7 +234,38 @@ const WhiteboardPage = ({ project_id }) => {
                 },
                 files: {},
             });
-            setHasUnsavedChanges(true); // Mark as unsaved if you want
+            setHasUnsavedChanges(true);
+
+            const elements = excalidrawRef.current.getSceneElements();
+            const appState = excalidrawRef.current.getAppState();
+            const files = excalidrawRef.current.getFiles();
+
+            const scene = {
+                elements: [],
+                appState: {
+                    ...excalidrawRef.current.getAppState(),
+                },
+                files: {},
+            };
+
+            dispatch(saveProjectWhiteboard({ id: project_id, data: scene })).then((response) => {
+                if (response.payload.status === 200) {
+                    setHasUnsavedChanges(false);
+                    setLastSavedScene(scene);
+                    setSubmitting(false);
+                    showNotification({
+                        id: 'load-data',
+                        loading: true,
+                        title: translate('Project Whiteboard'),
+                        message: translate('Whiteboard Reset successfully'),
+                        disallowClose: true,
+                        color: 'green',
+                    });
+                } else {
+                    setSubmitting(false);
+                    console.error('Failed to save whiteboard:', response.payload.message);
+                }
+            });
         }
     };
 
@@ -264,48 +294,6 @@ const WhiteboardPage = ({ project_id }) => {
                     onChange={handleChange}
                     initialData={initialData}
                     viewModeEnabled={viewModeEnabled}
-                    renderTopRightUI={() => {
-                        return (
-                            <>
-                                {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-comments']) && (
-                                    <Tooltip label={translate('Add Comment')} position="top" withArrow withinPortal={false}>
-                                        <ActionIcon
-                                            onClick={() => setCommentMode(!commentMode)}
-                                            variant="filled" color={"#EBF1F4"} size="lg"
-                                            aria-label="Settings"
-                                        >
-                                            <IconMessage2 stroke={1.25} size={22} color={"#202020"} />
-                                        </ActionIcon>
-                                    </Tooltip>
-                                )}
-                                <Tooltip label={translate('Save Whiteboard')} position="top" withArrow withinPortal={false}>
-                                    <ActionIcon
-                                        onClick={handleSave}
-                                        variant="filled" color={"#ED7D31"} size="lg"
-                                        aria-label="Settings"
-                                        loaderProps={{ type: 'dots' }}
-                                        loading={submitting}
-                                        disabled={submitting}
-                                    >
-                                        <IconDeviceFloppy stroke={1.25} size={22} />
-                                    </ActionIcon>
-                                </Tooltip>
-                                <Tooltip label={translate('Reset Whiteboard')} position="top" withArrow withinPortal={false}>
-                                    <ActionIcon
-                                        onClick={handleReset}
-                                        variant="filled" color={"#EBF1F4"} size="lg"
-                                        aria-label="Settings"
-                                        loaderProps={{ type: 'dots' }}
-                                    >
-                                        <IconTrash stroke={1.25} size={22} color={"#202020"} />
-                                    </ActionIcon>
-                                </Tooltip>
-
-
-                            </>
-                        );
-                    }}
-
                 >
                     <WelcomeScreen>
                         <WelcomeScreen.Center>
@@ -317,40 +305,127 @@ const WhiteboardPage = ({ project_id }) => {
                                 <WelcomeScreen.Center.MenuItemHelp />
                             </WelcomeScreen.Center.Menu> */}
                             <WelcomeScreen.Hints.ToolbarHint />
-                            <WelcomeScreen.Hints.MenuHint />
+                            {/* <WelcomeScreen.Hints.MenuHint /> */}
                             <WelcomeScreen.Hints.HelpHint />
                         </WelcomeScreen.Center>
                     </WelcomeScreen>
 
-                    <Footer>
-                        <Group gap={6} ml={10}>
-                            {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-comments']) && (
-                                <Tooltip label={translate('Add Comment')} position="top" withArrow withinPortal={false}>
-                                    <ActionIcon
-                                        onClick={() => setCommentMode(!commentMode)}
-                                        variant="filled" color={"#EBF1F4"} size="lg"
-                                        aria-label="Settings"
-                                    >
-                                        <IconMessage2 stroke={1.25} size={22} color={"#202020"} />
-                                    </ActionIcon>
-                                </Tooltip>
-                            )}
-                            <Tooltip label={translate('Save Whiteboard')} position="top" withArrow withinPortal={false}>
-                                <ActionIcon
-                                    onClick={handleSave}
-                                    variant="filled" color={"#ED7D31"} size="lg"
-                                    aria-label="Settings"
-                                    loaderProps={{ type: 'dots' }}
-                                    loading={submitting}
-                                    disabled={submitting}
+                    {(
+                        !initialData ||
+                        (
+                            initialData.elements?.length === 0 &&
+                            (!initialData.files || Object.keys(initialData.files).length === 0)
+                        )
+                    ) && (
+                            <Box
+                                style={{
+                                    position: 'absolute',
+                                    left: 600,
+                                    bottom: 85,
+                                    pointerEvents: 'none',
+                                    zIndex: 12,
+                                }}
+                            >
+                                {/* Arrow SVG (pointing down to the footer) */}
+                                <svg width="110" height="70" style={{ position: 'absolute', left: 90, top: 40, transform: 'scaleY(-1)' }}>
+                                    <path
+                                        d="M10,60 Q60,10 100,10"
+                                        stroke="#bbb"
+                                        strokeWidth="2.5"
+                                        fill="none"
+                                        markerEnd="url(#arrowhead)"
+                                    />
+                                    <defs>
+                                        <marker
+                                            id="arrowhead"
+                                            markerWidth="8"
+                                            markerHeight="8"
+                                            refX="8"
+                                            refY="4"
+                                            orient="auto"
+                                        >
+                                            <polygon points="0 0, 8 4, 0 8" fill="#bbb" />
+                                        </marker>
+                                    </defs>
+                                </svg>
+                                {/* Hint Text */}
+                                <Text
+                                    style={{
+                                        fontFamily: "'Virgil','Excalidraw','Architects Daughter', 'Shadows Into Light', cursive, sans-serif",
+                                        fontSize: 16,
+                                        color: "#bbb",
+                                        whiteSpace: "pre-line",
+                                        userSelect: "none",
+                                        marginLeft: 0,
+                                        marginBottom: 10,
+                                    }}
                                 >
-                                    <IconDeviceFloppy stroke={1.25} size={22} />
-                                </ActionIcon>
-                            </Tooltip>
+                                    Use these tools!
+                                    <br />
+                                    Comments, Save, Reset, and more
+                                </Text>
+                            </Box>
+                        )}
 
+                    <Footer>
+                        <Group justify='center' style={{ flex: 1 }}>
+                            <Card withBorder radius="md" p={'7px'} shadow='sm'
+                                bg="#F1F3F5"
+                                style={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                }}
+                            >
+                                <Group spacing={4}>
+                                    {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-comments']) && (
+                                        <Tooltip label={translate('Add Comment')} position="top" withArrow>
+                                            <ActionIcon
+                                                onClick={() => setCommentMode(!commentMode)}
+                                                variant="subtle" color='#202020' size="sm"
+                                                aria-label="Settings"
+                                            >
+                                                <IconMessage2 stroke={1.25} size={22} color={"#202020"} />
+                                            </ActionIcon>
+                                        </Tooltip>
+                                    )}
+                                    <Tooltip label={translate('Reset Whiteboard')} position="top" withArrow>
+                                        <ActionIcon
+                                            onClick={handleReset}
+                                            variant="subtle" color='#202020' size="sm"
+                                            aria-label="Settings"
+                                            loaderProps={{ type: 'dots' }}
+                                        >
+                                            <IconRestore stroke={1.25} size={22} color={"#202020"} />
+                                        </ActionIcon>
+                                    </Tooltip>
+                                    <Tooltip label={translate('Open in New Tab')} position="top" withArrow>
+                                        <ActionIcon
+                                            variant="subtle" color='#202020' size="sm"
+                                            aria-label="Settings"
+                                            component="a"
+                                            href="https://mantine.dev"
+                                            target='_blank'
+                                        >
+                                            <IconExternalLink stroke={1.25} size={22} color={"#202020"} />
+                                        </ActionIcon>
+                                    </Tooltip>
+                                    <Divider orientation="vertical" color='#c2c2c2' />
+                                    <Tooltip label={translate('Save Whiteboard')} position="top" withArrow>
+                                        <ActionIcon
+                                            onClick={handleSave}
+                                            variant="filled" color='orange' size="sm"
+                                            aria-label="Settings"
+                                            loaderProps={{ type: 'dots' }}
+                                            loading={submitting}
+                                            disabled={submitting}
+                                        >
+                                            <IconDeviceFloppy stroke={1.25} size={22} color={"white"} />
+                                        </ActionIcon>
+                                    </Tooltip>
+                                </Group>
+                            </Card>
                         </Group>
-                        <Group justify='flex-end' mr={10} style={{ flex: 1 }}>
-                            <Text size="sm" c="dimmed" ta="right" fw={500} mt={8} ml={10}>
+                        <Box ml="auto">
+                            <Text size="sm" c="dimmed" ta="right" fw={500} mt={8} mr={10}>
                                 Powered by{" "}
                                 <Anchor
                                     href="https://excalidraw.com"
@@ -363,7 +438,7 @@ const WhiteboardPage = ({ project_id }) => {
                                     Excalidraw
                                 </Anchor>
                             </Text>
-                        </Group>
+                        </Box>
                     </Footer>
 
                 </Excalidraw>
@@ -441,16 +516,54 @@ const WhiteboardPage = ({ project_id }) => {
                                 }}
                             />
                         </Box>
-                        <Button mt={4} size='xs' color="#39758D"
-                            onClick={handleAddComment}
-                            disabled={!commentText.trim()}
-                            loading={addLoading}
-                            loaderProps={{ type: 'dots' }}
-                        >
-                            <IconSend stroke={1.25} />
-                        </Button>
+                        <Group justify='flex-end' mt={4}>
+                            <ActionIcon
+                                variant="filled" color={"#39758D"} size="lg"
+                                aria-label="Settings"
+                                onClick={handleAddComment}
+                                disabled={!commentText.trim()}
+                                loading={addLoading}
+                                loaderProps={{ type: 'dots' }}
+                            >
+                                <IconCircleArrowUpFilled stroke={1.25} size={22} />
+                            </ActionIcon>
+                        </Group>
                     </Popover.Dropdown>
                 </Popover>
+
+                <Modal
+                    opened={saveModalOpen}
+                    onClose={() => setSaveModalOpen(false)}
+                    title={
+                        <>
+                            <Group spacing="xs">
+                                <ThemeIcon color="orange" radius="xl" size="lg" variant="filled">
+                                    <IconDeviceFloppy size={24} />
+                                </ThemeIcon>
+                                <Text size="md" weight={500}>
+                                    {translate('Save Changes?')}
+                                </Text>
+                            </Group>
+                        </>
+                    }
+                    size="md"
+                    centered
+                >
+                    <Divider size="xs" my={0} className='!-ml-4 w-[calc(100%+2rem)]' />
+                    <Stack spacing="md" pt="md">
+                        <Text size="sm" ta="center" pt={10} c="#4D4D4D">
+                            Are you want to save changes to the whiteboard before leaving?
+                        </Text>
+                        <Group mt="md" justify="flex-end">
+                            <Button variant="default" onClick={() => setSaveModalOpen(false)}>
+                                {translate('Cancel')}
+                            </Button>
+                            <Button color="orange" onClick={handleSave} loading={submitting} disabled={submitting} loaderProps={{ type: 'dots' }}>
+                                {translate('Save')}
+                            </Button>
+                        </Group>
+                    </Stack>
+                </Modal>
 
             </Box>
         </>

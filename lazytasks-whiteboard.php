@@ -13,7 +13,7 @@
  * @package           Lazytasks_Whiteboard
  *
  * @wordpress-plugin
- * Plugin Name:       Lazytasks Whiteboard
+ * Plugin Name:       Lazytasks Whiteboard Addon
  * Plugin URI:        https://laycoders.co
  * Description:       Addon for LazyTasks FREE Plugin.
  * Version:           1.0.0

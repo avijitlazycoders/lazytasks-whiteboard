@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Popover, Avatar, Group, Text, Card, Divider, CloseButton, Button, Textarea, Box, ScrollArea, ActionIcon, Menu } from "@mantine/core";
-import { IconDeviceFloppy, IconDotsVertical, IconPencil, IconSend, IconTrash, IconX } from '@tabler/icons-react';
+import { Popover, Avatar, Group, Text, Card, Divider, CloseButton, Button, Textarea, Box, ScrollArea, ActionIcon, Menu, Modal, ThemeIcon, Stack } from "@mantine/core";
+import { IconCircleArrowUp, IconCircleArrowUpFilled, IconDeviceFloppy, IconDotsVertical, IconPencil, IconSend, IconTrash, IconX } from '@tabler/icons-react';
 import { translate } from "../../utils/i18n";
 import { useSelector, useDispatch } from "react-redux";
 import { useParams } from 'react-router-dom';
@@ -42,6 +42,9 @@ const WhiteboardComments = ({
     const [mouseDownPos, setMouseDownPos] = useState(null);
     const [wasDrag, setWasDrag] = useState(false);
 
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [deleteTarget, setDeleteTarget] = useState({ id: null, type: null });
+
     const avatarRef = useRef(null);
 
     const { zoom, scrollX, scrollY } = excalidrawAppState;
@@ -61,85 +64,54 @@ const WhiteboardComments = ({
     const handleDeleteComment = () => {
         // Implement your delete comment logic here
         console.log(`Delete comment with ID: ${openCommentPopoverId}`);
-        modals.openConfirmModal({
-            title: 'Delete Comment',
-            centered: true,
-            children: (
-                <Text size="sm">
-                    Are you sure you want to delete all comments ?
-                </Text>
-            ),
-            labels: { confirm: 'Yes', cancel: "Cancel" },
-            confirmProps: { color: 'red' },
-            onCancel: () => console.log('Cancel'),
-            onConfirm: () => {
-                showNotification({
-                    id: 'load-data',
-                    loading: true,
-                    title: translate('Project Whiteboard'),
-                    message: "Deleting The Comment...",
-                    disallowClose: true,
-                    color: 'green',
-                });
-                dispatch(deleteWhiteboardComments({ id: project_id, data: { comment_id: openCommentPopoverId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '', 'type': 'comment' } })).then((response) => {
-                    if (response.payload.status === 200) {
-                        updateNotification({
-                            id: 'load-data',
-                            loading: true,
-                            title: translate('Project Whiteboard'),
-                            message: response.payload.message || translate('Whiteboard comment deleted successfully'),
-                            disallowClose: true,
-                            color: 'green',
-                        });
-                        setOpenCommentPopoverId(null);
-                    } else {
-                        console.error('Failed to delete comment:', response.payload.message);
-                    }
-                });
-            }
-        });
+        setDeleteTarget({ id: openCommentPopoverId, type: 'comment' });
+        setOpenCommentPopoverId(null);
+        setDeleteModalOpen(true);
     };
 
     const handleDeleteReply = (replyId) => {
         // Implement your delete reply logic here
         console.log(`Delete reply with ID: ${replyId}`);
-        modals.openConfirmModal({
-            title: 'Delete Comment',
-            centered: true,
-            children: (
-                <Text size="sm">
-                    Are you sure you want to delete all comments ?
-                </Text>
-            ),
-            labels: { confirm: 'Yes', cancel: "Cancel" },
-            confirmProps: { color: 'red' },
-            onCancel: () => console.log('Cancel'),
-            onConfirm: () => {
-                showNotification({
+        setDeleteTarget({ id: replyId, type: 'reply' });
+        setOpenCommentPopoverId(null);
+        setDeleteModalOpen(true);
+    }
+
+    const handleConfirmDelete = () => {
+        if (!deleteTarget.id || !deleteTarget.type) return;
+        showNotification({
+            id: 'load-data',
+            loading: true,
+            title: translate('Project Whiteboard'),
+            message: "Deleting The Comment...",
+            disallowClose: true,
+            color: 'green',
+        });
+        dispatch(deleteWhiteboardComments({
+            id: project_id,
+            data: {
+                comment_id: deleteTarget.id,
+                'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '',
+                'type': deleteTarget.type
+            }
+        })).then((response) => {
+            if (response.payload.status === 200) {
+                updateNotification({
                     id: 'load-data',
                     loading: true,
                     title: translate('Project Whiteboard'),
-                    message: "Deleting The Comment...",
+                    message: response.payload.message || translate('Whiteboard comment deleted successfully'),
                     disallowClose: true,
                     color: 'green',
                 });
-                dispatch(deleteWhiteboardComments({ id: project_id, data: { comment_id: replyId, 'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '', 'type': 'reply' } })).then((response) => {
-                    if (response.payload.status === 200) {
-                        updateNotification({
-                            id: 'load-data',
-                            loading: true,
-                            title: translate('Project Whiteboard'),
-                            message: response.payload.message || translate('Whiteboard comment deleted successfully'),
-                            disallowClose: true,
-                            color: 'green',
-                        });
-                    } else {
-                        console.error('Failed to delete comment:', response.payload.message);
-                    }
-                });
+                if (deleteTarget.type === 'comment') setOpenCommentPopoverId(null);
+            } else {
+                console.error('Failed to delete comment:', response.payload.message);
             }
+            setDeleteModalOpen(false);
+            setDeleteTarget({ id: null, type: null });
         });
-    }
+    };
 
     const handleAddReply = () => {
         if (!replyText.trim()) return;
@@ -571,17 +543,17 @@ const WhiteboardComments = ({
                                             }}
                                         />
                                     </Box>
-                                    <Group mt={4} justify="flex-start" align="center">
-                                        <Button
-                                            size="xs"
-                                            color="#39758D"
+                                    <Group mt={4} justify="flex-end" align="center">
+                                        <ActionIcon
+                                            variant="filled" color={"#39758D"} size="lg"
+                                            aria-label="Settings"
                                             onClick={handleAddReply}
+                                            disabled={!replyText.trim()}
                                             loading={addLoading}
                                             loaderProps={{ type: 'dots' }}
-                                            disabled={!replyText.trim()}
                                         >
-                                            <IconSend stroke={1.25} />
-                                        </Button>
+                                            <IconCircleArrowUpFilled stroke={1.25} size={22} />
+                                        </ActionIcon>
                                     </Group>
                                 </Card>
                             </Popover.Dropdown>
@@ -589,6 +561,42 @@ const WhiteboardComments = ({
                     </React.Fragment>
                 );
             })}
+
+            <Modal
+                opened={deleteModalOpen}
+                onClose={() => setDeleteModalOpen(false)}
+                title={
+                    <>
+                        <Group spacing="xs">
+                            <ThemeIcon color="red" radius="xl" size="lg" variant="filled">
+                                <IconTrash size={24} />
+                            </ThemeIcon>
+                            <Text size="md" weight={500}>
+                                {translate('Delete Comments')}
+                            </Text>
+                        </Group>
+                    </>
+                }
+                size="md"
+                centered
+            >
+                <Divider size="xs" my={0} className='!-ml-4 w-[calc(100%+2rem)]' />
+                <Stack spacing="md" pt="md">
+                    <Text size="sm" ta="center" pt={10} c="#4D4D4D">
+                        {deleteTarget.type === 'comment'
+                            ? translate('Are you sure you want to delete this comment and all its replies?')
+                            : translate('Are you sure you want to delete this reply?')}
+                    </Text>
+                    <Group mt="md" justify="flex-end">
+                        <Button variant="default" onClick={() => setDeleteModalOpen(false)}>
+                            {translate('Cancel')}
+                        </Button>
+                        <Button color="red" onClick={handleConfirmDelete}>
+                            {translate('Delete')}
+                        </Button>
+                    </Group>
+                </Stack>
+            </Modal>
         </>
     );
 };

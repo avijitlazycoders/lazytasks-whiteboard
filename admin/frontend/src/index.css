@@ -155,9 +155,14 @@ input[type="checkbox"]:checked::before {
 .mantine-Menu-dropdown div[aria-hidden="true"] {
   display: none;
 }
+/* whiteboard */
 .library-button {
   display: none !important;
 }
+.dropdown-menu-button {
+  display: none !important;
+}
+/* whiteboard */
 /* role edit */
 .role-editable-group {
   position: relative;
