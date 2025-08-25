@@ -32,6 +32,7 @@ class Lazytasks_Whiteboard_Deactivator {
 	public static function deactivate() {
 		// Remove the installed option
 		delete_option('lazytasks_whiteboard_installed');
+		delete_option('lazytasks_whiteboard_version');
 	}
 
 }

@@ -43,6 +43,10 @@ class Lazytasks_Whiteboard_Activator {
 		}
 
 		add_option('lazytasks_whiteboard_installed', true);
+
+		if(defined('LAZYTASKS_WHITEBOARD_VERSION')) {
+            update_option('lazytasks_whiteboard_version', LAZYTASKS_WHITEBOARD_VERSION, 'no');
+        }
 	}
 
 }
