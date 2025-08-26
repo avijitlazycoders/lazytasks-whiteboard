@@ -10,7 +10,7 @@ import store from "../../store";
 import WhiteboardPage from "./WhiteboardPage";
 import AppRoutes from "../../configs/routes/Routes";
 
-const Whiteboard = () => {
+const WhiteboardFullscreen = () => {
     const path = window.location.hash;
     const parts = path.split("/");
     const project_id = parts[parts.length - 1];
@@ -42,4 +42,4 @@ const Whiteboard = () => {
 
     );
 }
-export default Whiteboard; 
+export default WhiteboardFullscreen;

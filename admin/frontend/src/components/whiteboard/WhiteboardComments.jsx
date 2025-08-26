@@ -384,9 +384,9 @@ const WhiteboardComments = ({
                                     padding: 0,
                                 }}
                             >
-                                <Card padding="sm" withBorder radius="md" shadow='md'>
-                                    <Card.Section withBorder inheritPadding py="xs" className="bg-[#FDFDFD] mb-2">
-                                        <Group justify='flex-end' gap={6} align='center'>
+                                <Card padding="xs" withBorder radius="md" shadow='md'>
+                                    <Card.Section withBorder inheritPadding p={5} className="bg-[#FDFDFD] mb-2">
+                                        <Group justify='flex-end' gap={2} align='center' mr={4}>
                                             <ActionIcon variant="transparent" color="red" aria-label="Settings"
                                                 onClick={handleDeleteComment}
                                             >
@@ -451,7 +451,7 @@ const WhiteboardComments = ({
                                                 </Group>
                                             </>
                                         ) : (
-                                            <Text size="sm" mt={4}>
+                                            <Text size="sm" mt={4} ml={2}>
                                                 {comment.comment}
                                             </Text>
                                         )}
@@ -479,7 +479,7 @@ const WhiteboardComments = ({
                                                     </Group>
 
                                                     {/* Right side: Three-dot menu */}
-                                                    <Menu shadow="md" width={150}>
+                                                    <Menu shadow="md" width={100}>
                                                         <Menu.Target>
                                                             <ActionIcon variant="subtle" color="gray">
                                                                 <IconDotsVertical size={16} />
@@ -530,31 +530,34 @@ const WhiteboardComments = ({
                                         ))}
                                     </ScrollArea.Autosize>
 
-                                    <Box style={{ position: 'relative' }}>
+                                    <Box style={{ position: 'relative', backgroundColor: '#F1F3F5', borderRadius: 8, overflow: 'hidden' }}>
                                         <Textarea
+                                            variant="filled"
                                             value={replyText}
                                             onChange={e => setReplyText(e.currentTarget.value)}
                                             placeholder={translate('Type your comment...')}
-                                            minRows={2}
+                                            minRows={1}
                                             autoFocus
                                             autosize
                                             styles={{
                                                 input: { paddingRight: 30 }
                                             }}
                                         />
+                                        <Divider />
+                                        <Group mt={1} justify="flex-end" align="center">
+                                            <ActionIcon
+                                                variant="transparent" color="orange" size="md"
+                                                aria-label="Settings"
+                                                onClick={handleAddReply}
+                                                disabled={!replyText.trim()}
+                                                loading={addLoading}
+                                                loaderProps={{ type: 'dots' }}
+                                                mb={1}
+                                            >
+                                                <IconCircleArrowUpFilled stroke={1.25} size={22}/>
+                                            </ActionIcon>
+                                        </Group>
                                     </Box>
-                                    <Group mt={4} justify="flex-end" align="center">
-                                        <ActionIcon
-                                            variant="filled" color={"#39758D"} size="lg"
-                                            aria-label="Settings"
-                                            onClick={handleAddReply}
-                                            disabled={!replyText.trim()}
-                                            loading={addLoading}
-                                            loaderProps={{ type: 'dots' }}
-                                        >
-                                            <IconCircleArrowUpFilled stroke={1.25} size={22} />
-                                        </ActionIcon>
-                                    </Group>
                                 </Card>
                             </Popover.Dropdown>
                         </Popover>
@@ -582,12 +585,12 @@ const WhiteboardComments = ({
             >
                 <Divider size="xs" my={0} className='!-ml-4 w-[calc(100%+2rem)]' />
                 <Stack spacing="md" pt="md">
-                    <Text size="sm" ta="center" pt={10} c="#4D4D4D">
+                    <Text size="sm" ta="center" pt={5} c="#4D4D4D">
                         {deleteTarget.type === 'comment'
                             ? translate('Are you sure you want to delete this comment and all its replies?')
                             : translate('Are you sure you want to delete this reply?')}
                     </Text>
-                    <Group mt="md" justify="flex-end">
+                    <Group mt="sm" justify="flex-end">
                         <Button variant="default" onClick={() => setDeleteModalOpen(false)}>
                             {translate('Cancel')}
                         </Button>

@@ -12,7 +12,8 @@ import {
 } from "./store/whiteboardSlice";
 import { translate } from '../../utils/i18n';
 import { showNotification } from '@mantine/notifications';
-import { IconCircleArrowLeft, IconCircleArrowUp, IconCircleArrowUpFilled, IconDeviceFloppy, IconExternalLink, IconMessage, IconMessage2, IconMessageCircle, IconRestore, IconSend, IconTrash } from '@tabler/icons-react';
+import { useHotkeys } from '@mantine/hooks';
+import { IconArrowUp, IconCircleArrowLeft, IconCircleArrowUp, IconCircleArrowUpFilled, IconDeviceFloppy, IconExternalLink, IconMessage, IconMessage2, IconMessageCircle, IconRestore, IconSend, IconTrash } from '@tabler/icons-react';
 import { modals } from '@mantine/modals';
 import WhiteboardComments from './WhiteboardComments';
 import { hasPermission } from '../ui/permissions';
@@ -46,6 +47,7 @@ const WhiteboardPage = ({ project_id }) => {
     const [addLoading, setAddLoading] = useState(false);
 
     const [saveModalOpen, setSaveModalOpen] = useState(false);
+    const [resetModalOpen, setResetModalOpen] = useState(false);
 
     const isSceneEqual = (sceneA, sceneB) => {
         return (
@@ -72,7 +74,13 @@ const WhiteboardPage = ({ project_id }) => {
             try { textareaRef.current?.setSelectionRange(len, len); } catch { }
         });
     }, []);
-    
+
+    const isFirstRender = useRef(true);
+
+    useEffect(() => {
+        isFirstRender.current = false;
+    }, []);
+
     useEffect(() => {
         const handleBeforeUnload = (e) => {
             if (hasUnsavedChanges) {
@@ -261,6 +269,7 @@ const WhiteboardPage = ({ project_id }) => {
                         disallowClose: true,
                         color: 'green',
                     });
+                    setResetModalOpen(false);
                 } else {
                     setSubmitting(false);
                     console.error('Failed to save whiteboard:', response.payload.message);
@@ -283,9 +292,20 @@ const WhiteboardPage = ({ project_id }) => {
         ['whiteboard-manage']
     );
 
+    useHotkeys([
+        ['Escape', () => {
+            setPopoverOpened(false);
+            setCommentText('');
+            setCommentPoint(null);
+        }]
+    ]);
+
+    const isFullscreen = window.location.href.includes('/fullscreen');
+    const fullscreenUrl = `#/project/whiteboard/fullscreen/${project_id}`;
+
     return (
         <>
-            <Box style={{ width: '100%', height: '73vh', position: 'relative' }}>
+            <Box style={{ width: '100%', height: isFullscreen ? '100vh' : '73vh', position: 'relative' }}>
                 <LoadingOverlay visible={isLoading} />
 
                 <Excalidraw
@@ -389,7 +409,7 @@ const WhiteboardPage = ({ project_id }) => {
                                     )}
                                     <Tooltip label={translate('Reset Whiteboard')} position="top" withArrow>
                                         <ActionIcon
-                                            onClick={handleReset}
+                                            onClick={() => setResetModalOpen(true)}
                                             variant="subtle" color='#202020' size="sm"
                                             aria-label="Settings"
                                             loaderProps={{ type: 'dots' }}
@@ -397,12 +417,12 @@ const WhiteboardPage = ({ project_id }) => {
                                             <IconRestore stroke={1.25} size={22} color={"#202020"} />
                                         </ActionIcon>
                                     </Tooltip>
-                                    <Tooltip label={translate('Open in New Tab')} position="top" withArrow>
+                                    <Tooltip label={translate('Go to fullscreen')} position="top" withArrow>
                                         <ActionIcon
                                             variant="subtle" color='#202020' size="sm"
                                             aria-label="Settings"
                                             component="a"
-                                            href="https://mantine.dev"
+                                            href={fullscreenUrl}
                                             target='_blank'
                                         >
                                             <IconExternalLink stroke={1.25} size={22} color={"#202020"} />
@@ -472,9 +492,10 @@ const WhiteboardPage = ({ project_id }) => {
                     }}
                     width={300}
                     position="bottom"
-                    withArrow
                     shadow="md"
                     withinPortal={false}
+                    closeOnClickOutside
+                    closeOnEscape
                     styles={{
                         dropdown: {
                             position: 'absolute',
@@ -488,46 +509,50 @@ const WhiteboardPage = ({ project_id }) => {
                     <Popover.Dropdown
                         ref={dropdownRef}
                         onMouseDown={(e) => e.stopPropagation()}
+                        style={{
+                            border: 'none',
+                            backgroundColor: 'transparent',
+                            padding: 0,
+                        }}
                     >
-                        <Box style={{ position: 'relative' }}>
-                            <CloseButton
-                                style={{
-                                    position: 'absolute',
-                                    top: 8,
-                                    right: 8,
-                                    zIndex: 1
-                                }}
-                                size="sm"
-                                onClick={() => {
-                                    setPopoverOpened(false);
-                                    setCommentText('');
-                                    setCommentPoint(null);
-                                }}
-                            />
+                        <Card withBorder radius="md" padding="xs"
+                            bg="#F1F3F5">
+                            <Group justify='flex-end' mb={4}>
+                                <CloseButton
+                                    size="sm"
+                                    onClick={() => {
+                                        setPopoverOpened(false);
+                                        setCommentText('');
+                                        setCommentPoint(null);
+                                    }}
+                                />
+                            </Group>
                             <Textarea
+                                variant="filled"
                                 ref={textareaRef}
                                 value={commentText}
                                 onChange={e => setCommentText(e.currentTarget.value)}
                                 placeholder={translate('Type your comment...')}
-                                minRows={2}
+                                minRows={1}
                                 autosize
                                 styles={{
                                     input: { paddingRight: 30 }
                                 }}
                             />
-                        </Box>
-                        <Group justify='flex-end' mt={4}>
-                            <ActionIcon
-                                variant="filled" color={"#39758D"} size="lg"
-                                aria-label="Settings"
-                                onClick={handleAddComment}
-                                disabled={!commentText.trim()}
-                                loading={addLoading}
-                                loaderProps={{ type: 'dots' }}
-                            >
-                                <IconCircleArrowUpFilled stroke={1.25} size={22} />
-                            </ActionIcon>
-                        </Group>
+                            <Divider />
+                            <Group justify='flex-end' mt={2}>
+                                <ActionIcon
+                                    variant="transparent" color="orange" size="sm"
+                                    aria-label="Settings"
+                                    onClick={handleAddComment}
+                                    disabled={!commentText.trim()}
+                                    loading={addLoading}
+                                    loaderProps={{ type: 'dots' }}
+                                >
+                                    <IconCircleArrowUpFilled stroke={1.25} size={22} />
+                                </ActionIcon>
+                            </Group>
+                        </Card>
                     </Popover.Dropdown>
                 </Popover>
 
@@ -560,6 +585,40 @@ const WhiteboardPage = ({ project_id }) => {
                             </Button>
                             <Button color="orange" onClick={handleSave} loading={submitting} disabled={submitting} loaderProps={{ type: 'dots' }}>
                                 {translate('Save')}
+                            </Button>
+                        </Group>
+                    </Stack>
+                </Modal>
+
+                <Modal
+                    opened={resetModalOpen}
+                    onClose={() => setResetModalOpen(false)}
+                    title={
+                        <>
+                            <Group spacing="xs">
+                                <ThemeIcon color="orange" radius="xl" size="lg" variant="filled">
+                                    <IconRestore size={24} />
+                                </ThemeIcon>
+                                <Text size="md" weight={500}>
+                                    {translate('Reset Whiteboard?')}
+                                </Text>
+                            </Group>
+                        </>
+                    }
+                    size="md"
+                    centered
+                >
+                    <Divider size="xs" my={0} className='!-ml-4 w-[calc(100%+2rem)]' />
+                    <Stack spacing="md" pt="md">
+                        <Text size="sm" ta="center" pt={5} c="#4D4D4D">
+                            Are you want to reset the whiteboard? This action cannot be undone.
+                        </Text>
+                        <Group mt="xs" justify="flex-end">
+                            <Button variant="default" onClick={() => setResetModalOpen(false)}>
+                                {translate('Cancel')}
+                            </Button>
+                            <Button color="orange" onClick={handleReset} loading={submitting} disabled={submitting} loaderProps={{ type: 'dots' }}>
+                                {translate('Yes')}
                             </Button>
                         </Group>
                     </Stack>
