@@ -75,12 +75,6 @@ const WhiteboardPage = ({ project_id }) => {
         });
     }, []);
 
-    const isFirstRender = useRef(true);
-
-    useEffect(() => {
-        isFirstRender.current = false;
-    }, []);
-
     useEffect(() => {
         const handleBeforeUnload = (e) => {
             if (hasUnsavedChanges) {
@@ -407,16 +401,18 @@ const WhiteboardPage = ({ project_id }) => {
                                             </ActionIcon>
                                         </Tooltip>
                                     )}
-                                    <Tooltip label={translate('Reset Whiteboard')} position="top" withArrow>
-                                        <ActionIcon
-                                            onClick={() => setResetModalOpen(true)}
-                                            variant="subtle" color='#202020' size="sm"
-                                            aria-label="Settings"
-                                            loaderProps={{ type: 'dots' }}
-                                        >
-                                            <IconRestore stroke={1.25} size={22} color={"#202020"} />
-                                        </ActionIcon>
-                                    </Tooltip>
+                                    {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-manage']) && (
+                                        <Tooltip label={translate('Reset Whiteboard')} position="top" withArrow>
+                                            <ActionIcon
+                                                onClick={() => setResetModalOpen(true)}
+                                                variant="subtle" color='#202020' size="sm"
+                                                aria-label="Settings"
+                                                loaderProps={{ type: 'dots' }}
+                                            >
+                                                <IconRestore stroke={1.25} size={22} color={"#202020"} />
+                                            </ActionIcon>
+                                        </Tooltip>
+                                    )}
                                     <Tooltip label={translate('Go to fullscreen')} position="top" withArrow>
                                         <ActionIcon
                                             variant="subtle" color='#202020' size="sm"
@@ -428,19 +424,23 @@ const WhiteboardPage = ({ project_id }) => {
                                             <IconExternalLink stroke={1.25} size={22} color={"#202020"} />
                                         </ActionIcon>
                                     </Tooltip>
-                                    <Divider orientation="vertical" color='#c2c2c2' />
-                                    <Tooltip label={translate('Save Whiteboard')} position="top" withArrow>
-                                        <ActionIcon
-                                            onClick={handleSave}
-                                            variant="filled" color='orange' size="sm"
-                                            aria-label="Settings"
-                                            loaderProps={{ type: 'dots' }}
-                                            loading={submitting}
-                                            disabled={submitting}
-                                        >
-                                            <IconDeviceFloppy stroke={1.25} size={22} color={"white"} />
-                                        </ActionIcon>
-                                    </Tooltip>
+                                    {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-manage']) && (
+                                        <>
+                                            <Divider orientation="vertical" color='#c2c2c2' />
+                                            <Tooltip label={translate('Save Whiteboard')} position="top" withArrow>
+                                                <ActionIcon
+                                                    onClick={handleSave}
+                                                    variant="filled" color='orange' size="sm"
+                                                    aria-label="Settings"
+                                                    loaderProps={{ type: 'dots' }}
+                                                    loading={submitting}
+                                                    disabled={submitting}
+                                                >
+                                                    <IconDeviceFloppy stroke={1.25} size={22} color={"white"} />
+                                                </ActionIcon>
+                                            </Tooltip>
+                                        </>
+                                    )}
                                 </Group>
                             </Card>
                         </Group>

@@ -23,7 +23,6 @@
  * License URI:       http://www.gnu.org/licenses/gpl-2.0.txt
  * Text Domain:       lazytasks-whiteboard
  * Domain Path:       /languages
- * Requires Plugins:  lazytasks-project-task-management
  */
 
 // If this file is called directly, abort.
