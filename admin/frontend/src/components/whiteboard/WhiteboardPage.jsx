@@ -17,6 +17,7 @@ import { IconArrowUp, IconCircleArrowLeft, IconCircleArrowUp, IconCircleArrowUpF
 import { modals } from '@mantine/modals';
 import WhiteboardComments from './WhiteboardComments';
 import { hasPermission } from '../ui/permissions';
+import isEqual from 'fast-deep-equal';
 
 const WhiteboardPage = ({ project_id }) => {
     // const { project_id } = useParams();
@@ -27,6 +28,8 @@ const WhiteboardPage = ({ project_id }) => {
             dispatch(setLoggedInUser(window.loggedInUser));
         }
     }, [dispatch]);
+
+    const LOCAL_STORAGE_KEY = project_id ? `excalidraw-localdraft-${project_id}` : null;
 
     const { isLoading, projectWhiteboard, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
 
@@ -46,16 +49,24 @@ const WhiteboardPage = ({ project_id }) => {
     const [excalidrawAppState, setExcalidrawAppState] = useState({ zoom: 1, scrollX: 0, scrollY: 0 });
     const [addLoading, setAddLoading] = useState(false);
 
-    const [saveModalOpen, setSaveModalOpen] = useState(false);
+    const [showRestoreModal, setShowRestoreModal] = useState(false);
     const [resetModalOpen, setResetModalOpen] = useState(false);
+    const [localDraft, setLocalDraft] = useState(null);
+    const [initialDataToUse, setInitialDataToUse] = useState(null);
+    const [hasDecidedRestore, setHasDecidedRestore] = useState(false);
 
-    const isSceneEqual = (sceneA, sceneB) => {
+    function isSceneEqual(sceneA, sceneB) {
         return (
-            JSON.stringify(sceneA?.elements) === JSON.stringify(sceneB?.elements) &&
-            JSON.stringify(sceneA?.appState) === JSON.stringify(sceneB?.appState) &&
-            JSON.stringify(sceneA?.files) === JSON.stringify(sceneB?.files)
+            isEqual(sceneA?.elements || [], sceneB?.elements || []) &&
+            isEqual(normalizeFiles(sceneA?.files), normalizeFiles(sceneB?.files))
         );
-    };
+    }
+
+    function normalizeFiles(files) {
+        if (!files || (Array.isArray(files) && files.length === 0) || (typeof files === "object" && Object.keys(files).length === 0))
+            return {};
+        return files;
+    }
 
     useEffect(() => {
         if (project_id) {
@@ -94,6 +105,7 @@ const WhiteboardPage = ({ project_id }) => {
         // Set lastSavedScene when initial data loads
         if (initialData) {
             setLastSavedScene(initialData);
+            setInitialDataToUse(initialData);
         }
     }, [initialData]);
 
@@ -109,6 +121,16 @@ const WhiteboardPage = ({ project_id }) => {
         };
 
         setHasUnsavedChanges(!isSceneEqual(scene, lastSavedScene));
+
+        // Save to localStorage
+        if (LOCAL_STORAGE_KEY && !showRestoreModal) {
+            try {
+                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(scene));
+            } catch (e) {
+                // Optional: handle quota errors
+                console.warn('Could not save Excalidraw draft:', e);
+            }
+        }
 
         // Only update if zoom/scroll changed
         setExcalidrawAppState(prev => {
@@ -126,6 +148,71 @@ const WhiteboardPage = ({ project_id }) => {
             }
             return prev;
         });
+    };
+
+    useEffect(() => {
+        if (!projectWhiteboard || hasDecidedRestore) return;
+
+        if (LOCAL_STORAGE_KEY) {
+            const draft = localStorage.getItem(LOCAL_STORAGE_KEY);
+            if (draft) {
+                try {
+                    const parsedDraft = JSON.parse(draft);
+                    setLocalDraft(parsedDraft);
+
+                    // Only prompt if drafts are different AND we haven't already made a choice
+                    if (
+                        !isSceneEqual(projectWhiteboard, parsedDraft)
+                    ) {
+                        setShowRestoreModal(true);
+                    } else if (initialDataToUse === null) {
+                        setInitialDataToUse(projectWhiteboard);
+                    }
+                } catch (e) {
+                    setLocalDraft(null);
+                    if (initialDataToUse === null) setInitialDataToUse(projectWhiteboard);
+                }
+            } else {
+                setLocalDraft(null);
+                if (initialDataToUse === null) setInitialDataToUse(projectWhiteboard);
+            }
+        } else {
+            if (initialDataToUse === null) setInitialDataToUse(projectWhiteboard);
+        }
+        // eslint-disable-next-line
+    }, [project_id, projectWhiteboard, hasDecidedRestore]);
+
+    const clearLocalDraft = () => {
+        if (LOCAL_STORAGE_KEY) {
+            localStorage.removeItem(LOCAL_STORAGE_KEY);
+        }
+    };
+
+    const handleRestore = () => {
+        setInitialDataToUse(localDraft); // show local draft
+        setShowRestoreModal(false);
+        setHasDecidedRestore(true);
+
+        // Save immediately to server
+        dispatch(saveProjectWhiteboard({ id: project_id, data: localDraft })).then((response) => {
+            if (response.payload.status === 200) {
+                clearLocalDraft();
+                showNotification({
+                    id: 'restored-local-draft',
+                    loading: false,
+                    title: translate('Project Whiteboard'),
+                    message: translate('Draft restored and saved to server!'),
+                    color: 'green',
+                });
+            }
+        });
+    };
+
+    const handleDiscard = () => {
+        clearLocalDraft();
+        setInitialDataToUse(projectWhiteboard); // show server data
+        setShowRestoreModal(false);
+        setHasDecidedRestore(true);
     };
 
     const handleSave = () => {
@@ -157,7 +244,8 @@ const WhiteboardPage = ({ project_id }) => {
                     disallowClose: true,
                     color: 'green',
                 });
-                setSaveModalOpen(false);
+                setShowRestoreModal(false);
+                clearLocalDraft();
             } else {
                 setSubmitting(false);
                 console.error('Failed to save whiteboard:', response.payload.message);
@@ -264,6 +352,7 @@ const WhiteboardPage = ({ project_id }) => {
                         color: 'green',
                     });
                     setResetModalOpen(false);
+                    clearLocalDraft();
                 } else {
                     setSubmitting(false);
                     console.error('Failed to save whiteboard:', response.payload.message);
@@ -303,10 +392,10 @@ const WhiteboardPage = ({ project_id }) => {
                 <LoadingOverlay visible={isLoading} />
 
                 <Excalidraw
-                    key={initialData ? JSON.stringify(initialData.elements) : 'empty'}
+                    key={initialDataToUse ? JSON.stringify(initialDataToUse.elements) : 'empty'}
                     ref={excalidrawRef}
                     onChange={handleChange}
-                    initialData={initialData}
+                    initialData={initialDataToUse}
                     viewModeEnabled={viewModeEnabled}
                 >
                     <WelcomeScreen>
@@ -557,8 +646,8 @@ const WhiteboardPage = ({ project_id }) => {
                 </Popover>
 
                 <Modal
-                    opened={saveModalOpen}
-                    onClose={() => setSaveModalOpen(false)}
+                    opened={showRestoreModal}
+                    onClose={handleDiscard}
                     title={
                         <>
                             <Group spacing="xs">
@@ -577,14 +666,14 @@ const WhiteboardPage = ({ project_id }) => {
                     <Divider size="xs" my={0} className='!-ml-4 w-[calc(100%+2rem)]' />
                     <Stack spacing="md" pt="md">
                         <Text size="sm" ta="center" pt={10} c="#4D4D4D">
-                            Are you want to save changes to the whiteboard before leaving?
+                            {translate('You have unsaved whiteboard changes. Would you like to restore them?')}
                         </Text>
                         <Group mt="md" justify="flex-end">
-                            <Button variant="default" onClick={() => setSaveModalOpen(false)}>
+                            <Button variant="default" onClick={handleDiscard}>
                                 {translate('Cancel')}
                             </Button>
-                            <Button color="orange" onClick={handleSave} loading={submitting} disabled={submitting} loaderProps={{ type: 'dots' }}>
-                                {translate('Save')}
+                            <Button color="orange" onClick={handleRestore} loading={submitting} disabled={submitting} loaderProps={{ type: 'dots' }}>
+                                {translate('Restore')}
                             </Button>
                         </Group>
                     </Stack>
