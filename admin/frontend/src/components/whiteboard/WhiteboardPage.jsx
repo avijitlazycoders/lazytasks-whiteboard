@@ -62,6 +62,13 @@ const WhiteboardPage = ({ project_id }) => {
         );
     }
 
+    function isSceneEmpty(scene) {
+        if (!scene) return true;
+        const hasElements = Array.isArray(scene.elements) && scene.elements.length > 0;
+        const hasFiles = scene.files && Object.keys(scene.files).length > 0;
+        return !hasElements && !hasFiles;
+    }
+
     function normalizeFiles(files) {
         if (!files || (Array.isArray(files) && files.length === 0) || (typeof files === "object" && Object.keys(files).length === 0))
             return {};
@@ -123,7 +130,9 @@ const WhiteboardPage = ({ project_id }) => {
         setHasUnsavedChanges(!isSceneEqual(scene, lastSavedScene));
 
         // Save to localStorage
-        if (LOCAL_STORAGE_KEY && !showRestoreModal) {
+        if (LOCAL_STORAGE_KEY && !showRestoreModal &&
+            hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-manage'])
+        ) {
             try {
                 localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(scene));
             } catch (e) {
@@ -153,7 +162,7 @@ const WhiteboardPage = ({ project_id }) => {
     useEffect(() => {
         if (!projectWhiteboard || hasDecidedRestore) return;
 
-        if (LOCAL_STORAGE_KEY) {
+        if (LOCAL_STORAGE_KEY && hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-manage'])) {
             const draft = localStorage.getItem(LOCAL_STORAGE_KEY);
             if (draft) {
                 try {
@@ -162,7 +171,8 @@ const WhiteboardPage = ({ project_id }) => {
 
                     // Only prompt if drafts are different AND we haven't already made a choice
                     if (
-                        !isSceneEqual(projectWhiteboard, parsedDraft)
+                        !isSceneEqual(projectWhiteboard, parsedDraft) &&
+                        !isSceneEmpty(parsedDraft)
                     ) {
                         setShowRestoreModal(true);
                     } else if (initialDataToUse === null) {
@@ -189,6 +199,14 @@ const WhiteboardPage = ({ project_id }) => {
     };
 
     const handleRestore = () => {
+        if (!localDraft || isSceneEmpty(localDraft)) {
+            // Don't restore if draft is empty, just use server data
+            setInitialDataToUse(projectWhiteboard);
+            setShowRestoreModal(false);
+            setHasDecidedRestore(true);
+            clearLocalDraft();
+            return;
+        }
         setInitialDataToUse(localDraft); // show local draft
         setShowRestoreModal(false);
         setHasDecidedRestore(true);
@@ -397,6 +415,7 @@ const WhiteboardPage = ({ project_id }) => {
                     onChange={handleChange}
                     initialData={initialDataToUse}
                     viewModeEnabled={viewModeEnabled}
+                    zenModeEnabled={viewModeEnabled}
                 >
                     <WelcomeScreen>
                         <WelcomeScreen.Center>
