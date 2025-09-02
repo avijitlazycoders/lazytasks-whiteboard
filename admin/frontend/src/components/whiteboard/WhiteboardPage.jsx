@@ -570,7 +570,100 @@ const WhiteboardPage = ({ project_id }) => {
                     </Footer>
 
                 </Excalidraw>
-
+                {/* Custom Footer absolutely positioned */}
+                {viewModeEnabled && (
+                    <Box
+                        style={{
+                            position: 'absolute',
+                            left: 0,
+                            right: 0,
+                            bottom: 0,
+                            zIndex: 20,
+                            pointerEvents: 'auto',
+                            display: 'flex',
+                            justifyContent: 'center',
+                        }}
+                    >
+                        <Group justify='center' style={{ flex: 1 }}>
+                            <Card withBorder radius="md" p={'7px'} shadow='sm'
+                                bg="#F1F3F5"
+                                style={{
+                                    backgroundColor: 'rgba(255, 255, 255, 0.9)',
+                                    marginLeft: 175,
+                                }}
+                            >
+                                <Group spacing={4}>
+                                    {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-comments']) && (
+                                        <Tooltip label={translate('Add Comment')} position="top" withArrow>
+                                            <ActionIcon
+                                                onClick={() => setCommentMode(!commentMode)}
+                                                variant="subtle" color='#202020' size="sm"
+                                                aria-label="Settings"
+                                            >
+                                                <IconMessage2 stroke={1.25} size={22} color={"#202020"} />
+                                            </ActionIcon>
+                                        </Tooltip>
+                                    )}
+                                    {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-manage']) && (
+                                        <Tooltip label={translate('Reset Whiteboard')} position="top" withArrow>
+                                            <ActionIcon
+                                                onClick={() => setResetModalOpen(true)}
+                                                variant="subtle" color='#202020' size="sm"
+                                                aria-label="Settings"
+                                                loaderProps={{ type: 'dots' }}
+                                            >
+                                                <IconRestore stroke={1.25} size={22} color={"#202020"} />
+                                            </ActionIcon>
+                                        </Tooltip>
+                                    )}
+                                    <Tooltip label={translate('Go to fullscreen')} position="top" withArrow>
+                                        <ActionIcon
+                                            variant="subtle" color='#202020' size="sm"
+                                            aria-label="Settings"
+                                            component="a"
+                                            href={fullscreenUrl}
+                                            target='_blank'
+                                        >
+                                            <IconExternalLink stroke={1.25} size={22} color={"#202020"} />
+                                        </ActionIcon>
+                                    </Tooltip>
+                                    {hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-manage']) && (
+                                        <>
+                                            <Divider orientation="vertical" color='#c2c2c2' />
+                                            <Tooltip label={translate('Save Whiteboard')} position="top" withArrow>
+                                                <ActionIcon
+                                                    onClick={handleSave}
+                                                    variant="filled" color='orange' size="sm"
+                                                    aria-label="Settings"
+                                                    loaderProps={{ type: 'dots' }}
+                                                    loading={submitting}
+                                                    disabled={submitting}
+                                                >
+                                                    <IconDeviceFloppy stroke={1.25} size={22} color={"white"} />
+                                                </ActionIcon>
+                                            </Tooltip>
+                                        </>
+                                    )}
+                                </Group>
+                            </Card>
+                        </Group>
+                        <Box ml="auto">
+                            <Text size="sm" c="dimmed" ta="right" fw={500} mt={8} mr={10}>
+                                Powered by{" "}
+                                <Anchor
+                                    href="https://excalidraw.com"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    underline
+                                    c="#39758D"
+                                    fw={600}
+                                >
+                                    Excalidraw
+                                </Anchor>
+                            </Text>
+                        </Box>
+                    </Box>
+                )}
                 {/* Overlay for comment mode */}
                 {commentMode && (
                     <Box
