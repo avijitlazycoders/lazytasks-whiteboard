@@ -10,17 +10,7 @@ class Lazytasks_Whiteboard_Api {
 
 	const WHITEBOARD_ROUTE_NAMESPACE = 'lazytasks/api/v1';
 	public function admin_routes(){
-		register_rest_route(
-			self::WHITEBOARD_ROUTE_NAMESPACE,
-			'/premium/qr-code',
-			array(
-				'method' => WP_REST_Server::READABLE,
-				'callback' => array(new Lazytasks_Whiteboard_Default_Controller(), 'getQRCode'),
-				'permission_callback' => '__return_true',
-				'args' => array()
-			)
-		);
-
+		
 		register_rest_route(
 			self::WHITEBOARD_ROUTE_NAMESPACE,
 			'/whiteboard/projects/whiteboard/(?P<id>\d+)',

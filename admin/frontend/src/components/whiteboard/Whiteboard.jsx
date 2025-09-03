@@ -8,12 +8,9 @@ import { Notifications } from '@mantine/notifications';
 import '@mantine/notifications/styles.css';
 import store from "../../store";
 import WhiteboardPage from "./WhiteboardPage";
-import AppRoutes from "../../configs/routes/Routes";
 
-const Whiteboard = () => {
-    const path = window.location.hash;
-    const parts = path.split("/");
-    const project_id = parts[parts.length - 1];
+const Whiteboard = ({params}) => {
+    const project_id = params.id;
 
     const theme = createTheme({
         colorScheme: 'light',
@@ -34,9 +31,7 @@ const Whiteboard = () => {
         <Provider store={store}>
             <MantineProvider theme={theme}>
                 <Notifications />
-                <ModalsProvider>
                     <WhiteboardPage project_id={project_id} />
-                </ModalsProvider>
             </MantineProvider>
         </Provider>
 

@@ -9,6 +9,7 @@ import {
     saveWhiteboardComment,
     fetchWhiteboardComments,
     setLoggedInUser,
+    updateWhiteboardCopy
 } from "./store/whiteboardSlice";
 import { translate } from '../../utils/i18n';
 import { showNotification } from '@mantine/notifications';
@@ -29,9 +30,7 @@ const WhiteboardPage = ({ project_id }) => {
         }
     }, [dispatch]);
 
-    const LOCAL_STORAGE_KEY = project_id ? `excalidraw-localdraft-${project_id}` : null;
-
-    const { isLoading, projectWhiteboard, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
+    const { isLoading, projectWhiteboard, projectWhiteboardCopy, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
 
     const excalidrawRef = useRef(null);
     const [submitting, setSubmitting] = useState(false);
@@ -49,11 +48,9 @@ const WhiteboardPage = ({ project_id }) => {
     const [excalidrawAppState, setExcalidrawAppState] = useState({ zoom: 1, scrollX: 0, scrollY: 0 });
     const [addLoading, setAddLoading] = useState(false);
 
-    const [showRestoreModal, setShowRestoreModal] = useState(false);
     const [resetModalOpen, setResetModalOpen] = useState(false);
-    const [localDraft, setLocalDraft] = useState(null);
-    const [initialDataToUse, setInitialDataToUse] = useState(null);
-    const [hasDecidedRestore, setHasDecidedRestore] = useState(false);
+    const lastSavedSceneRef = useRef(null);
+    const currentSceneRef = useRef(null);
 
     function isSceneEqual(sceneA, sceneB) {
         return (
@@ -70,8 +67,14 @@ const WhiteboardPage = ({ project_id }) => {
     }
 
     function normalizeFiles(files) {
-        if (!files || (Array.isArray(files) && files.length === 0) || (typeof files === "object" && Object.keys(files).length === 0))
+        if (!files) return {};
+        if (Array.isArray(files)) {
+            // If files is an array, convert to an empty object (or a mapped object if needed)
             return {};
+        }
+        if (typeof files === "object" && Object.keys(files).length === 0) {
+            return {};
+        }
         return files;
     }
 
@@ -112,12 +115,13 @@ const WhiteboardPage = ({ project_id }) => {
         // Set lastSavedScene when initial data loads
         if (initialData) {
             setLastSavedScene(initialData);
-            setInitialDataToUse(initialData);
+            lastSavedSceneRef.current = initialData;
+            currentSceneRef.current = initialData;
         }
     }, [initialData]);
 
     const handleChange = (elements, appState) => {
-        setHasUnsavedChanges(true);
+        // setHasUnsavedChanges(true);
         const scene = {
             elements,
             appState: {
@@ -127,19 +131,11 @@ const WhiteboardPage = ({ project_id }) => {
             files: excalidrawRef.current?.getFiles(),
         };
 
-        setHasUnsavedChanges(!isSceneEqual(scene, lastSavedScene));
+        currentSceneRef.current = scene;
 
-        // Save to localStorage
-        if (LOCAL_STORAGE_KEY && !showRestoreModal &&
-            hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-manage'])
-        ) {
-            try {
-                localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(scene));
-            } catch (e) {
-                // Optional: handle quota errors
-                console.warn('Could not save Excalidraw draft:', e);
-            }
-        }
+        setHasUnsavedChanges(!isSceneEqual(scene, lastSavedSceneRef.current));
+
+        // Save to copy data
 
         // Only update if zoom/scroll changed
         setExcalidrawAppState(prev => {
@@ -157,80 +153,6 @@ const WhiteboardPage = ({ project_id }) => {
             }
             return prev;
         });
-    };
-
-    useEffect(() => {
-        if (!projectWhiteboard || hasDecidedRestore) return;
-
-        if (LOCAL_STORAGE_KEY && hasPermission(loggedInUser && loggedInUser.llc_permissions, ['whiteboard-manage'])) {
-            const draft = localStorage.getItem(LOCAL_STORAGE_KEY);
-            if (draft) {
-                try {
-                    const parsedDraft = JSON.parse(draft);
-                    setLocalDraft(parsedDraft);
-
-                    // Only prompt if drafts are different AND we haven't already made a choice
-                    if (
-                        !isSceneEqual(projectWhiteboard, parsedDraft) &&
-                        !isSceneEmpty(parsedDraft)
-                    ) {
-                        setShowRestoreModal(true);
-                    } else if (initialDataToUse === null) {
-                        setInitialDataToUse(projectWhiteboard);
-                    }
-                } catch (e) {
-                    setLocalDraft(null);
-                    if (initialDataToUse === null) setInitialDataToUse(projectWhiteboard);
-                }
-            } else {
-                setLocalDraft(null);
-                if (initialDataToUse === null) setInitialDataToUse(projectWhiteboard);
-            }
-        } else {
-            if (initialDataToUse === null) setInitialDataToUse(projectWhiteboard);
-        }
-        // eslint-disable-next-line
-    }, [project_id, projectWhiteboard, hasDecidedRestore]);
-
-    const clearLocalDraft = () => {
-        if (LOCAL_STORAGE_KEY) {
-            localStorage.removeItem(LOCAL_STORAGE_KEY);
-        }
-    };
-
-    const handleRestore = () => {
-        if (!localDraft || isSceneEmpty(localDraft)) {
-            // Don't restore if draft is empty, just use server data
-            setInitialDataToUse(projectWhiteboard);
-            setShowRestoreModal(false);
-            setHasDecidedRestore(true);
-            clearLocalDraft();
-            return;
-        }
-        setInitialDataToUse(localDraft); // show local draft
-        setShowRestoreModal(false);
-        setHasDecidedRestore(true);
-
-        // Save immediately to server
-        dispatch(saveProjectWhiteboard({ id: project_id, data: localDraft })).then((response) => {
-            if (response.payload.status === 200) {
-                clearLocalDraft();
-                showNotification({
-                    id: 'restored-local-draft',
-                    loading: false,
-                    title: translate('Project Whiteboard'),
-                    message: translate('Draft restored and saved to server!'),
-                    color: 'green',
-                });
-            }
-        });
-    };
-
-    const handleDiscard = () => {
-        clearLocalDraft();
-        setInitialDataToUse(projectWhiteboard); // show server data
-        setShowRestoreModal(false);
-        setHasDecidedRestore(true);
     };
 
     const handleSave = () => {
@@ -253,6 +175,7 @@ const WhiteboardPage = ({ project_id }) => {
             if (response.payload.status === 200) {
                 setHasUnsavedChanges(false);
                 setLastSavedScene(scene);
+                lastSavedSceneRef.current = scene;
                 setSubmitting(false);
                 showNotification({
                     id: 'load-data',
@@ -263,7 +186,6 @@ const WhiteboardPage = ({ project_id }) => {
                     color: 'green',
                 });
                 setShowRestoreModal(false);
-                clearLocalDraft();
             } else {
                 setSubmitting(false);
                 console.error('Failed to save whiteboard:', response.payload.message);
@@ -342,11 +264,6 @@ const WhiteboardPage = ({ project_id }) => {
                 },
                 files: {},
             });
-            setHasUnsavedChanges(true);
-
-            const elements = excalidrawRef.current.getSceneElements();
-            const appState = excalidrawRef.current.getAppState();
-            const files = excalidrawRef.current.getFiles();
 
             const scene = {
                 elements: [],
@@ -360,6 +277,7 @@ const WhiteboardPage = ({ project_id }) => {
                 if (response.payload.status === 200) {
                     setHasUnsavedChanges(false);
                     setLastSavedScene(scene);
+                    lastSavedSceneRef.current = scene;
                     setSubmitting(false);
                     showNotification({
                         id: 'load-data',
@@ -370,7 +288,6 @@ const WhiteboardPage = ({ project_id }) => {
                         color: 'green',
                     });
                     setResetModalOpen(false);
-                    clearLocalDraft();
                 } else {
                     setSubmitting(false);
                     console.error('Failed to save whiteboard:', response.payload.message);
@@ -404,16 +321,29 @@ const WhiteboardPage = ({ project_id }) => {
     const isFullscreen = window.location.href.includes('/fullscreen');
     const fullscreenUrl = `#/project/whiteboard/fullscreen/${project_id}`;
 
+    useEffect(() => {
+
+        return () => {
+            console.log(lastSavedSceneRef.current, currentSceneRef.current);
+            if (confirm('You have unsaved changes. Are you sure you want to leave without saving?')) {
+                // User confirmed, allow navigation
+            }else{
+                // User canceled, prevent navigation
+                handleSave();
+            }
+        };
+    }, []);
+
     return (
         <>
             <Box style={{ width: '100%', height: isFullscreen ? '100vh' : '73vh', position: 'relative' }}>
                 <LoadingOverlay visible={isLoading} />
 
                 <Excalidraw
-                    key={initialDataToUse ? JSON.stringify(initialDataToUse.elements) : 'empty'}
+                    key={initialData ? JSON.stringify(initialData.elements) : 'empty'}
                     ref={excalidrawRef}
                     onChange={handleChange}
-                    initialData={initialDataToUse}
+                    initialData={initialData}
                     viewModeEnabled={viewModeEnabled}
                     zenModeEnabled={viewModeEnabled}
                 >
@@ -664,6 +594,7 @@ const WhiteboardPage = ({ project_id }) => {
                         </Box>
                     </Box>
                 )}
+
                 {/* Overlay for comment mode */}
                 {commentMode && (
                     <Box
@@ -756,40 +687,6 @@ const WhiteboardPage = ({ project_id }) => {
                         </Card>
                     </Popover.Dropdown>
                 </Popover>
-
-                <Modal
-                    opened={showRestoreModal}
-                    onClose={handleDiscard}
-                    title={
-                        <>
-                            <Group spacing="xs">
-                                <ThemeIcon color="orange" radius="xl" size="lg" variant="filled">
-                                    <IconDeviceFloppy size={24} />
-                                </ThemeIcon>
-                                <Text size="md" weight={500}>
-                                    {translate('Save Changes?')}
-                                </Text>
-                            </Group>
-                        </>
-                    }
-                    size="md"
-                    centered
-                >
-                    <Divider size="xs" my={0} className='!-ml-4 w-[calc(100%+2rem)]' />
-                    <Stack spacing="md" pt="md">
-                        <Text size="sm" ta="center" pt={10} c="#4D4D4D">
-                            {translate('You have unsaved whiteboard changes. Would you like to restore them?')}
-                        </Text>
-                        <Group mt="md" justify="flex-end">
-                            <Button variant="default" onClick={handleDiscard}>
-                                {translate('Cancel')}
-                            </Button>
-                            <Button color="orange" onClick={handleRestore} loading={submitting} disabled={submitting} loaderProps={{ type: 'dots' }}>
-                                {translate('Restore')}
-                            </Button>
-                        </Group>
-                    </Stack>
-                </Modal>
 
                 <Modal
                     opened={resetModalOpen}

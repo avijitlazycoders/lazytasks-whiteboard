@@ -1,6 +1,6 @@
 // src/store.js
 import { configureStore } from '@reduxjs/toolkit';
-import premiumRootReducer from "./rootReducer";
+import whiteboardRootReducer from "./rootReducer";
 import storage from "redux-persist/lib/storage";
 import {persistReducer, persistStore} from "redux-persist";
 import {PERSIST_STORE_NAME} from "../constants/app.constant";
@@ -12,7 +12,7 @@ const persistConfig = {
     storage,
     whitelist: ['auth', 'locale'],
 }
-const persistedReducer = persistReducer(persistConfig, premiumRootReducer)
+const persistedReducer = persistReducer(persistConfig, whiteboardRootReducer)
 
 const store = configureStore({
     reducer: persistedReducer,

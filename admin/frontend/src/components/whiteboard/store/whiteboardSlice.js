@@ -18,7 +18,6 @@ export const fetchProjectWhiteboard = createAsyncThunk(
 export const saveProjectWhiteboard = createAsyncThunk(
     'projects/saveProjectWhiteboard', 
     async ({id, data}) => {
-        console.log(id, data);
         return addProjectWhiteboard(id, data);
     }
 )
@@ -60,6 +59,7 @@ const initialState = {
     error: null,
     licenseSuccessMessage: null,
     projectWhiteboard:{},
+    projectWhiteboardCopy:{},
     projectWhiteboardComments:[],
     loggedInUser: {},
 }
@@ -77,6 +77,9 @@ const whiteboardSlice = createSlice({
         },
         setLoggedInUser: (state, action) => {
             state.loggedInUser = action.payload
+        },
+        updateWhiteboardCopy: (state, action) => {
+            state.projectWhiteboardCopy = action.payload
         }
     },
     extraReducers: (builder) => {
@@ -103,6 +106,7 @@ const whiteboardSlice = createSlice({
                 state.isLoading = false
                 state.isError = false
                 state.projectWhiteboard = action.payload.data
+                state.projectWhiteboardCopy = action.payload.data
             })
             .addCase(saveProjectWhiteboard.rejected, (state, action) => {
                 state.isLoading = false
@@ -171,6 +175,7 @@ const whiteboardSlice = createSlice({
 export const {
     removeSuccessMessage,
     removeErrorMessage,
-    setLoggedInUser
+    setLoggedInUser,
+    updateWhiteboardCopy
 } = whiteboardSlice.actions
 export default whiteboardSlice.reducer

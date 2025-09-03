@@ -3,10 +3,7 @@ import React, {useEffect} from 'react';
 import { render } from '@wordpress/element';
 import { MantineProvider, createTheme } from '@mantine/core';
 import '@mantine/core/styles.css';
-import {ModalsProvider} from "@mantine/modals";
-import { Notifications } from '@mantine/notifications';
 import '@mantine/notifications/styles.css';
-import {MobileApp} from "./components/qrCode/MobileApp";
 import {Provider} from "react-redux";
 import store, {premiumPersistor} from './store';
 import WhietboardNav from "./components/whiteboard/WhietboardNav";
@@ -34,10 +31,7 @@ const App = () => {
         render(
             <Provider store={store}>
                 <MantineProvider theme={theme}>
-                    <Notifications />
-                    <ModalsProvider>
-                        <WhietboardNav project_id={project_id} />
-                    </ModalsProvider>
+                    <WhietboardNav project_id={project_id} />
                 </MantineProvider>
             </Provider>,
             document.getElementById('lazytasks_whiteboard_tab_button')
