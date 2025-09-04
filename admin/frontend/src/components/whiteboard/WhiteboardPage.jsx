@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useLocation, useParams } from 'react-router-dom';
-import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor, Tooltip, ActionIcon, Modal, ThemeIcon, Stack } from "@mantine/core";
+import { LoadingOverlay, ScrollArea, Box, Button, Popover, Avatar, Textarea, CloseButton, Group, Text, Card, Divider, Anchor, Tooltip, ActionIcon, Modal, ThemeIcon, Stack, Title } from "@mantine/core";
+import { modals } from '@mantine/modals';
 import { useSelector, useDispatch } from "react-redux";
 import { Excalidraw, Footer, MainMenu, Sidebar, WelcomeScreen, Excalifont } from '@excalidraw/excalidraw';
 import {
@@ -15,13 +16,12 @@ import { translate } from '../../utils/i18n';
 import { showNotification } from '@mantine/notifications';
 import { useHotkeys } from '@mantine/hooks';
 import { IconArrowUp, IconCircleArrowLeft, IconCircleArrowUp, IconCircleArrowUpFilled, IconDeviceFloppy, IconExternalLink, IconMessage, IconMessage2, IconMessageCircle, IconRestore, IconSend, IconTrash } from '@tabler/icons-react';
-import { modals } from '@mantine/modals';
 import WhiteboardComments from './WhiteboardComments';
 import { hasPermission } from '../ui/permissions';
 import isEqual from 'fast-deep-equal';
+import { compareScenes } from '../../utils/compareScenes';
 
 const WhiteboardPage = ({ project_id }) => {
-    // const { project_id } = useParams();
     const dispatch = useDispatch();
 
     useEffect(() => {
@@ -30,7 +30,7 @@ const WhiteboardPage = ({ project_id }) => {
         }
     }, [dispatch]);
 
-    const { isLoading, projectWhiteboard, projectWhiteboardCopy, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
+    const { isLoading, projectWhiteboard, projectWhiteboardComments, loggedInUser } = useSelector((state) => state.whiteboard.whiteboard);
 
     const excalidrawRef = useRef(null);
     const [submitting, setSubmitting] = useState(false);
@@ -185,7 +185,6 @@ const WhiteboardPage = ({ project_id }) => {
                     disallowClose: true,
                     color: 'green',
                 });
-                setShowRestoreModal(false);
             } else {
                 setSubmitting(false);
                 console.error('Failed to save whiteboard:', response.payload.message);
@@ -297,26 +296,16 @@ const WhiteboardPage = ({ project_id }) => {
     };
 
     const { zoom, scrollX, scrollY } = excalidrawAppState;
-    // const getTransformedCoords = (coords) => ({
-    //     x: coords.x * zoom + scrollX,
-    //     y: coords.y * zoom + scrollY,
-    // });
+
     const getTransformedCoords = (coords) => ({
         x: (coords.x + scrollX) * zoom,
         y: (coords.y + scrollY) * zoom,
     });
+
     const viewModeEnabled = !hasPermission(
         loggedInUser && loggedInUser.llc_permissions,
         ['whiteboard-manage']
     );
-
-    useHotkeys([
-        ['Escape', () => {
-            setPopoverOpened(false);
-            setCommentText('');
-            setCommentPoint(null);
-        }]
-    ]);
 
     const isFullscreen = window.location.href.includes('/fullscreen');
     const fullscreenUrl = `#/project/whiteboard/fullscreen/${project_id}`;
@@ -324,11 +313,12 @@ const WhiteboardPage = ({ project_id }) => {
     useEffect(() => {
 
         return () => {
-            console.log(lastSavedSceneRef.current, currentSceneRef.current);
-            if (confirm('You have unsaved changes. Are you sure you want to leave without saving?')) {
-                // User confirmed, allow navigation
-            }else{
-                // User canceled, prevent navigation
+            const result = compareScenes(lastSavedSceneRef.current, currentSceneRef.current, { tolerance: 0.5 });
+
+            if (result.equal) {
+                console.log("No unsaved changes");
+            } else {
+                console.log("Unsaved changes detected:");
                 handleSave();
             }
         };
@@ -336,6 +326,7 @@ const WhiteboardPage = ({ project_id }) => {
 
     return (
         <>
+        
             <Box style={{ width: '100%', height: isFullscreen ? '100vh' : '73vh', position: 'relative' }}>
                 <LoadingOverlay visible={isLoading} />
 
@@ -352,12 +343,7 @@ const WhiteboardPage = ({ project_id }) => {
                             <WelcomeScreen.Center.Heading>
                                 Welcome LazyTasks Whiteboard
                             </WelcomeScreen.Center.Heading>
-                            {/* <WelcomeScreen.Center.Menu>
-                                <WelcomeScreen.Center.MenuItemLoadScene />
-                                <WelcomeScreen.Center.MenuItemHelp />
-                            </WelcomeScreen.Center.Menu> */}
                             <WelcomeScreen.Hints.ToolbarHint />
-                            {/* <WelcomeScreen.Hints.MenuHint /> */}
                             <WelcomeScreen.Hints.HelpHint />
                         </WelcomeScreen.Center>
                     </WelcomeScreen>
