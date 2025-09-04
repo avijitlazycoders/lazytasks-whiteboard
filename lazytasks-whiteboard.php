@@ -16,7 +16,7 @@
  * Plugin Name:       Lazytasks Whiteboard Addon
  * Plugin URI:        https://laycoders.co
  * Description:       Enhance collaboration with LazyTasks’ whiteboard addon! Transforming ideas into visual tasks within your project workflow
- * Version:           1.0.0
+ * Version:           0.8.4
  * Author:            Lazycoders
  * Author URI:        https://laycoders.co/
  * License:           GPL-2.0+
@@ -35,8 +35,8 @@ if ( ! defined( 'WPINC' ) ) {
  * Start at version 1.0.0 and use SemVer - https://semver.org
  * Rename this for your plugin and update it as you release new versions.
  */
-define( 'LAZYTASKS_WHITEBOARD_VERSION', '1.0.0' );
-define( 'LAZYTASKS_WHITEBOARD_DB_VERSION', '1.0.0' );
+define( 'LAZYTASKS_WHITEBOARD_VERSION', '0.8.4' );
+define( 'LAZYTASKS_WHITEBOARD_DB_VERSION', '0.8.4' );
 
 global $wpdb;
 define( 'LAZYTASKS_WHITEBOARD_TABLE_PREFIX', $wpdb->prefix .'pms_whiteboard_' );
