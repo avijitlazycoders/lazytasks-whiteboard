@@ -1,9 +1,9 @@
 <?php
 
-namespace Lazytask\Helper\Migrations;
+namespace LazytasksWhiteboard\Helper\Migrations;
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
-class Lazytask_TaskMigrator {
+class Lazytasks_Whiteboard_Migrator {
 
 	//migrate
 	public static function migrate()

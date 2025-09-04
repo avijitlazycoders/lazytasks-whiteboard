@@ -2,7 +2,7 @@
 
 namespace LazytasksWhiteboard\Helper;
 
-use LazytasksWhiteboard\Helper\Migrations\Lazytasks_whiteboard_Migrator;
+use LazytasksWhiteboard\Helper\Migrations\Lazytasks_Whiteboard_Migrator;
 
 if ( ! defined( 'ABSPATH' ) ) exit; // Exit if accessed directly
 
