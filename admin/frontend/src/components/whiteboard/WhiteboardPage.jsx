@@ -10,7 +10,7 @@ import {
     saveWhiteboardComment,
     fetchWhiteboardComments,
     setLoggedInUser,
-    updateWhiteboardCopy
+    deleteWhiteboardAllComments
 } from "./store/whiteboardSlice";
 import { translate } from '../../utils/i18n';
 import { showNotification } from '@mantine/notifications';
@@ -272,26 +272,39 @@ const WhiteboardPage = ({ project_id }) => {
                 files: {},
             };
 
-            dispatch(saveProjectWhiteboard({ id: project_id, data: scene })).then((response) => {
+            dispatch(deleteWhiteboardAllComments({
+                id: project_id,
+                data: {
+                    'deleted_by': loggedInUser ? loggedInUser.loggedUserId : '',
+                }
+            })).then((response) => {
                 if (response.payload.status === 200) {
-                    setHasUnsavedChanges(false);
-                    setLastSavedScene(scene);
-                    lastSavedSceneRef.current = scene;
-                    setSubmitting(false);
-                    showNotification({
-                        id: 'load-data',
-                        loading: true,
-                        title: translate('Project Whiteboard'),
-                        message: translate('Whiteboard Reset successfully'),
-                        disallowClose: true,
-                        color: 'green',
+                    dispatch(saveProjectWhiteboard({ id: project_id, data: scene })).then((response) => {
+                        if (response.payload.status === 200) {
+                            setHasUnsavedChanges(false);
+                            setLastSavedScene(scene);
+                            lastSavedSceneRef.current = scene;
+                            setSubmitting(false);
+                            showNotification({
+                                id: 'load-data',
+                                loading: true,
+                                title: translate('Project Whiteboard'),
+                                message: translate('Whiteboard Reset successfully'),
+                                disallowClose: true,
+                                color: 'green',
+                            });
+                            setResetModalOpen(false);
+                        } else {
+                            setSubmitting(false);
+                            console.error('Failed to save whiteboard:', response.payload.message);
+                        }
                     });
-                    setResetModalOpen(false);
                 } else {
-                    setSubmitting(false);
-                    console.error('Failed to save whiteboard:', response.payload.message);
+                    console.error('Failed to delete comment:', response.payload.message);
                 }
             });
+
+
         }
     };
 
@@ -326,7 +339,7 @@ const WhiteboardPage = ({ project_id }) => {
 
     return (
         <>
-        
+
             <Box style={{ width: '100%', height: isFullscreen ? '100vh' : '73vh', position: 'relative' }}>
                 <LoadingOverlay visible={isLoading} />
 

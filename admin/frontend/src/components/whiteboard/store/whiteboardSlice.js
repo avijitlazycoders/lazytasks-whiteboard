@@ -5,7 +5,8 @@ import {
     addWhiteboardComment,
     getWhiteboardComments,
     removeWhiteboardComments,
-    editWhiteboardComment
+    editWhiteboardComment,
+    removeWhiteboardAllComments
 } from "../../../services/WhiteboardService";
 
 export const fetchProjectWhiteboard = createAsyncThunk(
@@ -40,6 +41,13 @@ export const deleteWhiteboardComments = createAsyncThunk(
     'projects/deleteWhiteboardComments',
     async ({ id, data }) => {
         return removeWhiteboardComments(id, data);
+    }
+)
+
+export const deleteWhiteboardAllComments = createAsyncThunk(
+    'projects/deleteWhiteboardAllComments',
+    async ({ id, data }) => {
+        return removeWhiteboardAllComments(id, data);
     }
 )
 
@@ -151,6 +159,20 @@ const whiteboardSlice = createSlice({
                 state.projectWhiteboardComments = action.payload && action.payload.data 
             })
             .addCase(deleteWhiteboardComments.rejected, (state, action) => {
+                state.isLoading = false
+                state.isError = false
+                state.error = action.error?.message
+            })
+            .addCase(deleteWhiteboardAllComments.pending, (state) => {
+                state.isLoading = true
+                state.isError = false
+            })
+            .addCase(deleteWhiteboardAllComments.fulfilled, (state, action) => {
+                state.isLoading = false
+                state.isError = false
+                state.projectWhiteboardComments = action.payload && action.payload.data 
+            })
+            .addCase(deleteWhiteboardAllComments.rejected, (state, action) => {
                 state.isLoading = false
                 state.isError = false
                 state.error = action.error?.message

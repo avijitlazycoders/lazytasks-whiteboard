@@ -351,4 +351,32 @@ class Lazytasks_Whiteboard_Controller {
 		
 	}
 
+	public static function deleteWhiteboardAllComment(WP_REST_Request $request)
+	{
+		global $wpdb;
+		$whiteboardCommentsTable = LAZYTASKS_WHITEBOARD_TABLE_PREFIX . 'comments';
+		$projectId = $request->get_param('id');
+
+		if (!$projectId) {
+			return new WP_REST_Response(['status' => 404, 'message' => 'Project ID is required', 'data' => null], 200);
+		}
+
+		$requestData = $request->get_json_params();
+		$deletedBy = isset($requestData['deleted_by']) ? (int)$requestData['deleted_by'] : null;
+
+		$deleted = $wpdb->update(
+			$whiteboardCommentsTable,
+			[
+				'deleted_at' => current_time('mysql'),
+			],
+			['project_id' => $projectId]
+		);
+
+		if ($deleted !== false) {
+			return new WP_REST_Response(['status' => 200, 'message' => 'All comments deleted successfully', 'data' => null], 200);
+		}
+		return new WP_REST_Response(['status' => 500, 'message' => 'Failed to delete comments', 'data' => null], 500);
+		
+	}
+
 }

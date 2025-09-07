@@ -59,6 +59,19 @@ export const removeWhiteboardComments = async (id, data) => {
     }
 }
 
+export const removeWhiteboardAllComments = async (id, data) => {
+    try {
+        const response = await ApiService.fetchData({
+            url: `/whiteboard/projects/whiteboard/delete/all/comments/${id}`,
+            method: 'put',
+            data: data,
+        })
+        return response.data;
+    } catch (error) {
+        return error.message;
+    }
+}
+
 export const editWhiteboardComment = async (id, data) => {
     try {
         const response = await ApiService.fetchData({
