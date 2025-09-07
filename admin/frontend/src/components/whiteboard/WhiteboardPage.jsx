@@ -350,11 +350,12 @@ const WhiteboardPage = ({ project_id }) => {
                     initialData={initialData}
                     viewModeEnabled={viewModeEnabled}
                     zenModeEnabled={viewModeEnabled}
+                    theme='Dark'
                 >
                     <WelcomeScreen>
                         <WelcomeScreen.Center>
                             <WelcomeScreen.Center.Heading>
-                                Welcome LazyTasks Whiteboard
+                                <Title order={2} c="#39758D" style={{ fontFamily: 'Virgil' }}>{translate('Welcome to LazyTask\'s Whiteboard')}</Title>
                             </WelcomeScreen.Center.Heading>
                             <WelcomeScreen.Hints.ToolbarHint />
                             <WelcomeScreen.Hints.HelpHint />
