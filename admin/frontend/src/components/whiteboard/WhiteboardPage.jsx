@@ -350,7 +350,6 @@ const WhiteboardPage = ({ project_id }) => {
                     initialData={initialData}
                     viewModeEnabled={viewModeEnabled}
                     zenModeEnabled={viewModeEnabled}
-                    theme='Dark'
                 >
                     <WelcomeScreen>
                         <WelcomeScreen.Center>
