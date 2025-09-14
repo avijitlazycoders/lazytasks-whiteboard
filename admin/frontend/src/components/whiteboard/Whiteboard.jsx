@@ -3,7 +3,6 @@ import { Provider, useDispatch, useSelector } from "react-redux";
 import { Button, Group, MantineProvider, ScrollArea, Text, TextInput, Grid, createTheme } from '@mantine/core';
 import '../../index.css';
 import '@mantine/core/styles.css';
-import { ModalsProvider } from "@mantine/modals";
 import { Notifications } from '@mantine/notifications';
 import '@mantine/notifications/styles.css';
 import store from "../../store";

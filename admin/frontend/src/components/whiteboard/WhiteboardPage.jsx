@@ -226,8 +226,7 @@ const WhiteboardPage = ({ project_id }) => {
         const newComment = {
             comments_coordinates: commentPoint,
             comment: commentText,
-            created_by: 1,
-            created_by: loggedInUser ? loggedInUser.loggedUserId : '',
+            created_by: loggedInUser ? loggedInUser.loggedUserId : null,
         };
 
         dispatch(saveWhiteboardComment({ id: project_id, data: newComment })).then((response) => {
